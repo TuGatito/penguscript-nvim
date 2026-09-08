@@ -1,44 +1,41 @@
 # 🐧 penguscript-nvim
 
-**Soporte completo de PenguScript para Neovim** — LSP integrado, filetype,
-resaltado de sintaxis, comandos `:Pengu*` y snippets. Ligero, sin dependencias
-obligatorias y compatible con Neovim **0.8+** en Windows, Linux y macOS.
-
-</div>
+**Full PenguScript support for Neovim** — built-in LSP, filetype detection,
+syntax highlighting, `:Pengu*` commands and snippets. Lightweight, no mandatory
+dependencies, compatible with Neovim **0.8+** on Windows, Linux and macOS.
 
 ---
 
-## ✨ Características
+## ✨ Features
 
-- **Servidor LSP automático**: registra el servidor `pengus` (`pengu lsp --stdio`)
-  y lo arranca solo al abrir un `.pengu` / `.d.pengu` — sin necesitar
-  nvim-lspconfig (aunque se integra con él si lo tienes).
-- **Detección de raíz de proyecto** con `root_pattern`: busca `pengu.yaml`,
-  `pengu.toml`, `Pengu.toml` y `.git` hacia arriba desde el archivo.
-- **Filetype `pengus`** para `.pengu` y `.d.pengu` (doble mecanismo:
+- **Automatic LSP server**: registers the `pengus` server (`pengu lsp --stdio`)
+  and starts it automatically when opening a `.pengu` / `.d.pengu` file — no
+  nvim-lspconfig required (it integrates with it when installed).
+- **Project root detection** via `root_pattern`: looks for `pengu.yaml`,
+  `pengu.toml`, `Pengu.toml` and `.git` walking up from the file.
+- **`pengus` filetype** for `.pengu` and `.d.pengu` files (dual mechanism:
   `vim.filetype.add` + `ftdetect`).
-- **Resaltado de sintaxis**: Treesitter si hay un parser `pengus` (Neovim
-  ≥ 0.10) y archivo `syntax/pengus.vim` como respaldo clásico.
-- **Comandos**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguFmt`,
+- **Syntax highlighting**: Treesitter when a `pengus` parser is available
+  (Neovim ≥ 0.10) with `syntax/pengus.vim` as the classic fallback.
+- **Commands**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguFmt`,
   `:PenguLspStart`, `:PenguLspRestart`, `:PenguLspLog`.
-- **Formato al guardar** opcional (`pengu fmt`) con paso seguro por archivo
-  temporal (no pierde cambios sin guardar).
-- **Snippets** opcionales para LuaSnip (`weave`, `rune`, `omen`, `if`,
-  `unless`, `while`, `for`, `judge`, `let`, `var`, `const`).
-- **Sin dependencias externas**: solo necesitas el binario `pengu`.
-  nvim-lspconfig, cmp-nvim-lsp y LuaSnip se usan únicamente si están
-  instalados.
+- **Optional format on save** (`pengu fmt`) using a safe temporary-file step
+  (never loses unsaved changes).
+- **Optional LuaSnip snippets** (`weave`, `rune`, `omen`, `if`, `unless`,
+  `while`, `for`, `judge`, `let`, `var`, `const`).
+- **No external dependencies**: you only need the `pengu` binary.
+  nvim-lspconfig, cmp-nvim-lsp and LuaSnip are used only when installed.
 
-## 📦 Requisitos
+## 📦 Requirements
 
-- Neovim ≥ 0.8 (0.10+ recomendado para Treesitter nativo).
-- El binario [`pengu`](https://github.com/TuGatito/penguscript) en el `$PATH`
-  (o configura su ruta, ver más abajo).
+- Neovim ≥ 0.8 (0.10+ recommended for native Treesitter).
+- The [`pengu`](https://github.com/TuGatito/penguscript) binary on your
+  `$PATH` (or configure its path, see below).
 
-> 💡 Las capturas de pantalla llegarán cuando el ecosistema PenguScript esté
-> listo. El resaltado funciona desde el primer día con la sintaxis de respaldo.
+> 💡 Screenshots will come once the PenguScript ecosystem is ready.
+> Highlighting works from day one thanks to the fallback syntax.
 
-## 🚀 Instalación
+## 🚀 Installation
 
 ### Lazy.nvim
 
@@ -47,10 +44,10 @@ obligatorias y compatible con Neovim **0.8+** en Windows, Linux y macOS.
   "TuGatito/penguscript-nvim",
   main = "pengus",
   opts = {
-    -- bin_path = "C:/tools/pengu.exe",  -- opcional
-    -- format_on_save = true,            -- opcional
+    -- bin_path = "C:/tools/pengu.exe",  -- optional
+    -- format_on_save = true,            -- optional
   },
-  -- Añade LuaSnip como dependencia SOLO si quieres los snippets:
+  -- Add LuaSnip as a dependency ONLY if you want the snippets:
   -- dependencies = { "L3MON4D3/LuaSnip" },
 }
 ```
@@ -71,19 +68,19 @@ use {
 ### vim-plug
 
 ```vim
-" Tras añadir el plugin, ejecuta :PlugInstall
+" After adding the plugin, run :PlugInstall
 Plug 'TuGatito/penguscript-nvim'
 
-" Opcional: helptags para :help pengus
+" Optional: helptags so :help pengus works
 Plug 'TuGatito/penguscript-nvim', { 'do': ':helptags ALL' }
 ```
 
 ```lua
--- En tu configuración Lua (init.lua / después de plug#begin):
+-- In your Lua config (init.lua / after plug#begin):
 require("pengus").setup {}
 ```
 
-### Manual (sin gestor)
+### Manual (no plugin manager)
 
 ```bash
 git clone https://github.com/TuGatito/penguscript-nvim.git \
@@ -91,56 +88,56 @@ git clone https://github.com/TuGatito/penguscript-nvim.git \
 nvim --headless "+helptags ALL" +qa
 ```
 
-Añade esto a tu configuración y el plugin queda activo con los valores por
-defecto (no hace falta llamar a `setup()` si te sirven):
+Add this to your config and the plugin is active with its defaults (you don't
+need to call `setup()` if the defaults suit you):
 
 ```lua
-require("pengus").setup {} -- opcional
+require("pengus").setup {} -- optional
 ```
 
-## ⚙️ Configuración
+## ⚙️ Configuration
 
-La configuración es opcional: sin `setup()` el plugin funciona con los
-valores por defecto (LSP automático incluido).
+Configuration is optional: without `setup()` the plugin works with its default
+values (automatic LSP included).
 
 ```lua
 require("pengus").setup {
-  -- Ruta al binario `pengu`. Si no se indica se usa, en orden:
+  -- Path to the `pengu` binary. When not set, resolved in this order:
   --   vim.g.pengus_bin_path  ->  $PENGU_BIN_PATH  ->  "pengu" (PATH)
   bin_path = nil,
 
-  -- Filetypes gestionados por el plugin.
+  -- Filetypes handled by the plugin.
   filetypes = { "pengus" },
 
-  -- Arranca el LSP automáticamente al abrir un archivo PenguScript.
+  -- Start the LSP automatically when opening a PenguScript file.
   auto_attach = true,
 
-  -- Registra `pengus` en lspconfig.configs si nvim-lspconfig está disponible.
+  -- Register `pengus` in lspconfig.configs when nvim-lspconfig is available.
   register_lspconfig = true,
 
-  -- Marcadores para detectar la raíz del proyecto (root_pattern).
+  -- Markers used to detect the project root (root_pattern).
   root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", ".git" },
 
   lsp = {
     name = "pengus",
     args = { "lsp", "--stdio" },
-    settings = {},                      -- ajustes enviados al servidor
-    handlers = nil,                     -- handlers LSP adicionales
-    on_attach = function(client, bufnr) -- tu on_attach (keymaps, etc.)
+    settings = {},                      -- settings sent to the server
+    handlers = nil,                     -- extra LSP handlers
+    on_attach = function(client, bufnr) -- your on_attach (keymaps, etc.)
       -- vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr })
     end,
-    capabilities = nil,   -- si no se indica: make_client_capabilities()
-                          -- ampliadas con cmp-nvim-lsp (si existe)
+    capabilities = nil,   -- when unset: make_client_capabilities()
+                          -- augmented with cmp-nvim-lsp (if installed)
     flags = { debounce_text_changes = 150 },
-    env = nil,            -- variables de entorno extra para el servidor
-    log_level = nil,      -- p. ej. vim.lsp.log_levels.DEBUG
+    env = nil,            -- extra environment variables for the server
+    log_level = nil,      -- e.g. vim.lsp.log_levels.DEBUG
   },
 
   commands = {
-    -- Directorio en el que corren build/check/run:
-    --   "project" -> raíz del proyecto del buffer
-    --   "buffer"  -> carpeta del archivo actual
-    --   "cwd"     -> directorio actual de Neovim (por defecto)
+    -- Directory where build/check/run are executed:
+    --   "project" -> project root of the buffer
+    --   "buffer"  -> directory of the current file
+    --   "cwd"     -> Neovim's current directory (default)
     cwd = "cwd",
     run = { split = "botright", size = 15, args = nil },
     build = { args = nil },
@@ -148,147 +145,146 @@ require("pengus").setup {
     fmt = { args = nil },
   },
 
-  -- Formatea con `pengu fmt` al guardar. true, false o { args = {...} }.
+  -- Format with `pengu fmt` on save. true, false or { args = {...} }.
   format_on_save = false,
   format_on_save_timeout = 30000, -- ms
 
   highlight = {
-    treesitter = "auto",  -- true | false | "auto" (usa el parser si existe)
-    colors = {},          -- sobrescrituras de grupos, p. ej.:
+    treesitter = "auto",  -- true | false | "auto" (uses the parser if present)
+    colors = {},          -- highlight group overrides, e.g.:
     -- colors = { PengusKeyword = { fg = "#c586c0", bold = true } }
   },
 
-  -- Registra los snippets en LuaSnip si está instalado.
+  -- Register the snippets in LuaSnip when it is installed.
   snippets = true,
 
-  -- Mensajes a través de vim.notify.
+  -- Messages via vim.notify.
   notify = true,
 }
 ```
 
-> **Atajos**: también puedes pasar `on_attach`, `capabilities` y `settings`
-> directamente en el nivel superior de `opts`; el plugin los reenvía a la
-> sección `lsp`.
+> **Shorthands**: you can also pass `on_attach`, `capabilities` and `settings`
+> at the top level of `opts`; the plugin forwards them to the `lsp` section.
 
-### Cambiar la ruta del binario
+### Changing the binary path
 
 ```lua
--- Opción 1: dentro de setup()
-require("pengus").setup { bin_path = "/ruta/a/pengu" }
+-- Option 1: inside setup()
+require("pengus").setup { bin_path = "/path/to/pengu" }
 
--- Opción 2: variable global (clásica)
-vim.g.pengus_bin_path = "C:/herramientas/pengu.exe"
+-- Option 2: global variable (classic)
+vim.g.pengus_bin_path = "C:/tools/pengu.exe"
 
--- Opción 3: variable de entorno
---   export PENGU_BIN_PATH=/ruta/a/pengu
+-- Option 3: environment variable
+--   export PENGU_BIN_PATH=/path/to/pengu
 ```
 
-## ⌨️ Comandos
+## ⌨️ Commands
 
-| Comando                  | Descripción                                                        |
-| ------------------------ | ------------------------------------------------------------------ |
-| `:PenguBuild [args...]`  | Ejecuta `pengu build [args...]`; salida en la quickfix si falla.   |
-| `:PenguRun [args...]`    | Ejecuta `pengu run [args...]` en una terminal nueva.               |
-| `:PenguCheck [args...]`  | Ejecuta `pengu check [args...]` y muestra el resultado.            |
-| `:PenguFmt [args...]`    | Formatea el archivo actual con `pengu fmt`.                        |
-| `:PenguLspStart`         | Arranca el LSP en el buffer actual.                                |
-| `:PenguLspRestart`       | Reinicia el servidor LSP.                                          |
-| `:PenguLspLog`           | Abre el archivo de log del LSP.                                    |
+| Command                 | Description                                                     |
+| ----------------------- | --------------------------------------------------------------- |
+| `:PenguBuild [args...]` | Runs `pengu build [args...]`; output goes to the quickfix.      |
+| `:PenguRun [args...]`   | Runs `pengu run [args...]` in a new terminal.                   |
+| `:PenguCheck [args...]` | Runs `pengu check [args...]` and shows the result.              |
+| `:PenguFmt [args...]`   | Formats the current file with `pengu fmt`.                      |
+| `:PenguLspStart`        | Starts the LSP on the current buffer.                           |
+| `:PenguLspRestart`      | Restarts the LSP server.                                        |
+| `:PenguLspLog`          | Opens the LSP log file.                                         |
 
-También hay equivalentes Lua (`require("pengus").build()`, `.run()`,
+Lua equivalents are also available (`require("pengus").build()`, `.run()`,
 `.check()`, `.format()`, `.restart()`, `.open_log()`).
 
 ## 🧠 LSP
 
-- El servidor se registra con el nombre **`pengus`**.
-- El arranque es **automático** al abrir archivos con filetype `pengus`
-  (desactívalo con `auto_attach = false` y usa `:PenguLspStart`).
-- Las capacidades del cliente habilitan completion, hover, definición,
-  referencias, renombrado, diagnósticos, etc., tal como las anuncie el
-  servidor. Añade tus propios keymaps con `lsp.on_attach`.
-- Si **nvim-lspconfig** está instalado, `require("lspconfig").pengus.setup {}`
-  también funciona (el plugin lo registra solo). Puedes gestionar el servidor
-  con lspconfig y desactivar el arranque automático del plugin:
+- The server is registered under the name **`pengus`**.
+- Startup is **automatic** when opening files with the `pengus` filetype
+  (disable it with `auto_attach = false` and use `:PenguLspStart`).
+- The client capabilities enable completion, hover, definition, references,
+  rename, diagnostics, etc., as advertised by the server. Add your own
+  keymaps with `lsp.on_attach`.
+- If **nvim-lspconfig** is installed, `require("lspconfig").pengus.setup {}`
+  also works (the plugin registers it on its own). You can manage the server
+  with lspconfig and disable the plugin's auto-start:
 
 ```lua
--- Usuario que prefiere gestionar todo con lspconfig:
+-- User who prefers to manage everything with lspconfig:
 require("pengus").setup { auto_attach = false }
 require("lspconfig").pengus.setup {
   on_attach = function(client, bufnr) ... end,
 }
 ```
 
-## 📐 Filetype y resaltado
+## 📐 Filetype & highlighting
 
-| Extensión      | Filetype |
+| Extension      | Filetype |
 | -------------- | -------- |
 | `foo.pengu`    | `pengus` |
 | `foo.d.pengu`  | `pengus` |
 
-El archivo `syntax/pengus.vim` colorea de forma clásica (palabras clave,
-tipos, comentarios `#`/`##`, cadenas, números, operadores, delimitadores…).
-Cuando existe un parser **Treesitter** `pengus` y Neovim ≥ 0.10, el plugin
-intenta usarlo automáticamente (`highlight.treesitter = "auto"`).
+The `syntax/pengus.vim` file provides classic highlighting (keywords, types,
+`#`/`##` comments, strings, numbers, operators, delimiters…). When a
+**Treesitter** `pengus` parser exists and Neovim ≥ 0.10, the plugin tries to
+use it automatically (`highlight.treesitter = "auto"`).
 
 ## ✂️ Snippets (LuaSnip)
 
-Con LuaSnip instalado y su expansión configurada, están disponibles:
+With LuaSnip installed and its expansion configured, these are available:
 
-| Disparador | Expansión                            |
-| ---------- | ------------------------------------ |
-| `weave`    | bloque `weave nombre { … }`          |
-| `rune`     | bloque `rune nombre { … }`           |
-| `omen`     | bloque `omen nombre { … }`           |
-| `if`       | `if condición { … }`                 |
-| `unless`   | `unless condición { … }`             |
-| `while`    | `while condición { … }`              |
-| `for`      | `for x in colección { … }`           |
-| `judge`    | `judge expr { when caso { … } }`     |
-| `let`      | declaración `let x = valor`          |
-| `var`      | declaración `var x = valor`          |
-| `const`    | declaración `const X = valor`        |
+| Trigger | Expansion                          |
+| ------- | ---------------------------------- |
+| `weave` | `weave name { … }` block           |
+| `rune`  | `rune name { … }` block            |
+| `omen`  | `omen name { … }` block            |
+| `if`    | `if condition { … }`               |
+| `unless`| `unless condition { … }`           |
+| `while` | `while condition { … }`            |
+| `for`   | `for x in collection { … }`        |
+| `judge` | `judge expr { when case { … } }`   |
+| `let`   | `let x = value` declaration        |
+| `var`   | `var x = value` declaration        |
+| `const` | `const X = value` declaration      |
 
-En Lazy.nvim añade `"L3MON4D3/LuaSnip"` como dependencia del plugin.
+With Lazy.nvim, add `"L3MON4D3/LuaSnip"` as a dependency of the plugin.
 
-## 🩺 Solución de problemas
+## 🩺 Troubleshooting
 
-- **«Binario pengu no encontrado»**: instala PenguScript o define
+- **“pengu binary not found”**: install PenguScript or set
   `vim.g.pengus_bin_path` / `$PENGU_BIN_PATH`.
-- **El LSP no arranca**: ejecuta `:PenguLspRestart` y mira `:PenguLspLog`.
-  Comprueba que el filetype es `pengus` (`:set ft?`) y que `pengu lsp --stdio`
-  responde en la terminal.
-- **Sin resaltado**: `:syntax on` y comprueba los grupos con
-  `:hi PengusKeyword`. Para Treesitter instala el parser
-  `pengus` (`require("nvim-treesitter.install").update { with_sync = true }`).
-- **Los comandos no existen**: asegúrate de que el plugin está en el
-  `runtimepath` y recarga con `:source $MYVIMRC` o reinicia Neovim.
+- **The LSP does not start**: run `:PenguLspRestart` and check `:PenguLspLog`.
+  Make sure the filetype is `pengus` (`:set ft?`) and that `pengu lsp --stdio`
+  responds in the terminal.
+- **No highlighting**: enable syntax with `:syntax on` and inspect the groups
+  with `:hi PengusKeyword`. For Treesitter, install the `pengus` parser
+  (`require("nvim-treesitter.install").update { with_sync = true }`).
+- **The commands are missing**: make sure the plugin is on your `runtimepath`
+  and reload with `:source $MYVIMRC` or restart Neovim.
 
-## 📁 Estructura del repositorio
+## 📁 Repository structure
 
 ```
 penguscript-nvim/
 ├── README.md
 ├── LICENSE            (MIT)
-├── doc/pengus.txt     (ayuda de :help)
+├── doc/pengus.txt     (:help docs)
 ├── lua/pengus/
-│   ├── init.lua       (punto de entrada / API pública)
-│   ├── config.lua     (opciones por defecto y merge)
-│   ├── lsp.lua        (configuración del LSP)
-│   ├── commands.lua   (comandos :Pengu* y formateo)
-│   ├── highlights.lua (Treesitter opcional y colores)
-│   ├── snippets.lua   (snippets LuaSnip opcionales)
-│   └── util.lua       (utilidades internas)
-├── plugin/pengus.vim  (comandos y carga automática)
+│   ├── init.lua       (entry point / public API)
+│   ├── config.lua     (default options and merge)
+│   ├── lsp.lua        (LSP configuration)
+│   ├── commands.lua   (:Pengu* commands and formatting)
+│   ├── highlights.lua (optional Treesitter and colors)
+│   ├── snippets.lua   (optional LuaSnip snippets)
+│   └── util.lua       (internal utilities)
+├── plugin/pengus.vim  (commands and auto-load)
 ├── ftdetect/pengus.vim
 ├── ftplugin/pengus.vim
-└── syntax/pengus.vim  (resaltado de respaldo)
+└── syntax/pengus.vim  (fallback highlighting)
 ```
 
-## 🤝 Contribuciones
+## 🤝 Contributing
 
-Los issues y pull requests son bienvenidos en el repositorio. Por favor, abre
-un issue antes de cambios grandes.
+Issues and pull requests are welcome in the repository. Please open an issue
+before large changes.
 
-## 📄 Licencia
+## 📄 License
 
-MIT — ver el archivo [LICENSE](./LICENSE). © 2026 TuGatito.
+MIT — see the [LICENSE](./LICENSE) file. © 2026 TuGatito.
