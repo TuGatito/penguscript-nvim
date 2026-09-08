@@ -206,16 +206,24 @@ local owned_entry = false
 
 --- Registra `pengus` en lspconfig.configs cuando nvim-lspconfig existe.
 -- Si el usuario (u otro plugin) ya registró el servidor, se respeta su entrada.
+--
+-- Nota: se importa el submódulo "lspconfig.configs" directamente. Acceder a
+-- `require("lspconfig").configs` dispara la metatabla del módulo raíz, que lo
+-- interpreta como un servidor desconocido y emite el aviso
+-- `config "configs" not found`.
 function M.register_lspconfig()
   local c = cfg()
   if c.register_lspconfig == false then
     return
   end
   local ok, lspconfig = pcall(require, "lspconfig")
-  if not ok or not lspconfig.configs then
+  if not ok then
     return
   end
-  local configs = lspconfig.configs
+  local ok_configs, configs = pcall(require, "lspconfig.configs")
+  if not ok_configs or type(configs) ~= "table" then
+    return
+  end
   if not owned_entry and configs.pengus then
     return -- ya registrado por el usuario/terceros: no pisamos su entrada
   end

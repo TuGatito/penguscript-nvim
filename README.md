@@ -39,16 +39,31 @@ dependencies, compatible with Neovim **0.8+** on Windows, Linux and macOS.
 
 ### Lazy.nvim
 
+Create the file `~/.config/nvim/lua/plugins/pengus.lua` (on Windows:
+`~/AppData/Local/nvim/lua/plugins/pengus.lua`). Lazy.nvim automatically loads
+every spec file inside the `lua/plugins/` directory:
+
 ```lua
-{
-  "TuGatito/penguscript-nvim",
-  main = "pengus",
-  opts = {
-    -- bin_path = "C:/tools/pengu.exe",  -- optional
-    -- format_on_save = true,            -- optional
-  },
+-- ~/.config/nvim/lua/plugins/pengus.lua
+return {
+  "TuGatito/penguscript-nvim", -- Replace with your user/repo
   -- Add LuaSnip as a dependency ONLY if you want the snippets:
-  -- dependencies = { "L3MON4D3/LuaSnip" },
+  dependencies = {
+    "L3MON4D3/LuaSnip", -- optional, only needed for snippets
+  },
+  config = function()
+    require("pengus").setup {
+      -- All options are optional:
+      -- bin_path = "C:/tools/pengu.exe", -- if `pengu` is not on your PATH
+      -- format_on_save = true,           -- format on save
+      -- snippets = true,                 -- enable LuaSnip snippets (default: true)
+      -- lsp = {
+      --   on_attach = function(client, bufnr)
+      --     -- your custom LSP keymaps here
+      --   end,
+      -- },
+    }
+  end,
 }
 ```
 
