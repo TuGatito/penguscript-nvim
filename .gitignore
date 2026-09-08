@@ -1,0 +1,9 @@
+# Artefactos generados
+doc/tags
+
+# Editor / SO
+*.swp
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,145 @@
+*pengus.txt*        Soporte de PenguScript para Neovim      *pengus*
+
+==============================================================================
+CONTENIDO                                    *pengus-contents*
+
+  1. Introducción ................... |pengus-introduction|
+  2. Instalación .................... |pengus-installation|
+  3. Configuración .................. |pengus-configuration|
+  4. Comandos ....................... |pengus-commands|
+  5. LSP ........................... |pengus-lsp|
+  6. Formato al guardar ............. |pengus-format-on-save|
+  7. Funciones Lua .................. |pengus-api|
+  8. Licencia ....................... |pengus-license|
+
+==============================================================================
+1. INTRODUCCIÓN                                     *pengus-introduction*
+
+penguscript-nvim proporciona soporte completo para PenguScript
+(extensiones .pengu y .d.pengu, filetype "pengus"):
+
+  - Servidor LSP `pengu lsp --stdio`, arrancado automáticamente y con
+    detección de la raíz del proyecto (pengu.yaml, pengu.toml, Pengu.toml,
+    .git).
+  - Resaltado de sintaxis: Treesitter si hay parser `pengus` (Neovim >= 0.10)
+    con respaldo clásico en syntax/pengus.vim.
+  - Comandos :PenguBuild, :PenguRun, :PenguCheck, :PenguFmt.
+  - Snippets opcionales para LuaSnip.
+
+Requiere el binario `pengu` en el $PATH (o configurar su ruta). No depende de
+otros plugins; nvim-lspconfig y LuaSnip solo se usan si están instalados.
+
+==============================================================================
+2. INSTALACIÓN                                      *pengus-installation*
+
+Con Lazy.nvim: >
+  {
+    "TuGatito/penguscript-nvim",
+    main = "pengus",
+    opts = {},
+    -- dependencies = { "L3MON4D3/LuaSnip" },   -- solo para snippets
+  }
+<
+
+Con Packer: >
+  use { "TuGatito/penguscript-nvim", config = function() require("pengus").setup() end }
+<
+
+Con vim-plug: >
+  Plug "TuGatito/penguscript-nvim"   " y tras instalarlo: :helptags ALL
+<
+
+==============================================================================
+3. CONFIGURACIÓN                                    *pengus-configuration*
+
+>lua
+  require("pengus").setup {
+    bin_path = "C:/tools/pengu.exe",   -- ruta del binario (opcional)
+    auto_attach = true,                -- arranca el LSP al abrir .pengu
+    root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", ".git" },
+    lsp = {
+      on_attach = function(client, bufnr)
+        -- tus keymaps de LSP (gd, K, gr, ...)
+      end,
+    },
+    commands = {
+      cwd = "cwd",      -- "project" | "buffer" | "cwd"
+      run = { split = "botright", size = 15 },
+    },
+    format_on_save = false,            -- true para formatear al guardar
+    highlight = { treesitter = "auto", colors = {} },
+    snippets = true,                   -- LuaSnip (si está instalado)
+  }
+<
+
+También se respetan las variables globales:
+  vim.g.pengus_bin_path     " ruta del binario (alternativa a bin_path)
+y la variable de entorno:
+  $PENGU_BIN_PATH
+
+Puedes llamar a setup() varias veces: los autocomandos y la entrada de
+lspconfig se regeneran con la nueva configuración.
+
+==============================================================================
+4. COMANDOS                                        *pengus-commands*
+
+  :PenguBuild [args...]    Ejecuta `pengu build [args...]` y muestra la salida
+                           en la quickfix si falla o hay avisos.
+  :PenguRun [args...]      Ejecuta `pengu run [args...]` en una terminal.
+  :PenguCheck [args...]    Ejecuta `pengu check [args...]` (quickfix).
+  :PenguFmt [args...]      Formatea el archivo actual con `pengu fmt`.
+  :PenguLspStart           Arranca el LSP en el buffer actual.
+  :PenguLspRestart         Reinicia el servidor LSP.
+  :PenguLspLog             Abre el log del LSP.
+
+El directorio de trabajo de build/check/run lo controla la opción
+commands.cwd (por defecto, el directorio actual de Neovim). Ver
+|pengus-configuration|.
+
+==============================================================================
+5. LSP                                                    *pengus-lsp*
+
+El cliente LSP usa el nombre "pengus". Cuando nvim-lspconfig está instalado,
+el plugin registra automáticamente el servidor en lspconfig.configs, por lo
+que `:LspInfo` y `require("lspconfig").pengus.setup { ... }` funcionan.
+La raíz del proyecto se busca con root_pattern sobre root_markers; si no hay
+marcadores, se usa el directorio del archivo (modo archivo suelto).
+
+Sobrescritura del binario: >
+  vim.g.pengus_bin_path = "/home/user/bin/pengu"
+<
+
+==============================================================================
+6. FORMATO AL GUARDAR                           *pengus-format-on-save*
+
+Para formatear cada archivo .pengu antes de guardar: >
+  require("pengus").setup { format_on_save = true }
+<
+El formateo se hace sobre un archivo temporal con el contenido del buffer, por
+lo que es seguro con cambios sin guardar. Si necesitas argumentos extra: >
+  format_on_save = { args = { "--check" } }
+<
+Para desactivarlo: format_on_save = false.
+
+==============================================================================
+7. FUNCIONES LUA                                      *pengus-api*
+
+  require("pengus").setup(opts)      Configura el plugin.
+  require("pengus").config()         Configuración efectiva.
+  require("pengus").build(args?)     Equivalente a :PenguBuild.
+  require("pengus").run(args?)       Equivalente a :PenguRun.
+  require("pengus").check(args?)     Equivalente a :PenguCheck.
+  require("pengus").format(args?)    Equivalente a :PenguFmt.
+  require("pengus").restart()        Equivalente a :PenguLspRestart.
+  require("pengus").open_log()       Equivalente a :PenguLspLog.
+  require("pengus").lsp              Submódulo lsp (acceso perezoso).
+
+Los comandos aceptan una lista de argumentos o varargs:
+  require("pengus").run({ "main.pengu", "--verbose" })
+
+==============================================================================
+8. LICENCIA                                        *pengus-license*
+
+MIT. Copyright (c) 2026 TuGatito. Ver el archivo LICENSE del repositorio.
+
+vim:tw=78:ts=8:ft=help:norl:
