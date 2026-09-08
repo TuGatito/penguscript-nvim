@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🐧 penguscript-nvim
 
 **Soporte completo de PenguScript para Neovim** — LSP integrado, filetype,
