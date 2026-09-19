@@ -21,6 +21,9 @@ command! -nargs=* PenguRun lua require("pengus.commands").run(<f-args>)
 " Comprueba el proyecto y muestra el resultado en la quickfix
 command! -nargs=* PenguCheck lua require("pengus.commands").check(<f-args>)
 
+" Ejecuta los tests del proyecto (pengu test [args...])
+command! -nargs=* PenguTest lua require("pengus.commands").test(<f-args>)
+
 " Formatea el archivo actual (pengu fmt [args...])
 command! -nargs=* PenguFmt lua require("pengus.commands").format(<f-args>)
 

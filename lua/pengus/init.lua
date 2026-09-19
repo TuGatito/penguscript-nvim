@@ -61,6 +61,10 @@ function M.check(...)
   return require("pengus.commands").check(...)
 end
 
+function M.test(...)
+  return require("pengus.commands").test(...)
+end
+
 function M.format(...)
   return require("pengus.commands").format(...)
 end

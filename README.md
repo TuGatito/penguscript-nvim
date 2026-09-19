@@ -15,14 +15,19 @@ dependencies, compatible with Neovim **0.8+** on Windows, Linux and macOS.
   `pengu.toml`, `Pengu.toml` and `.git` walking up from the file.
 - **`pengus` filetype** for `.pengu` and `.d.pengu` files (dual mechanism:
   `vim.filetype.add` + `ftdetect`).
-- **Syntax highlighting**: Treesitter when a `pengus` parser is available
-  (Neovim ≥ 0.10) with `syntax/pengus.vim` as the classic fallback.
-- **Commands**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguFmt`,
+- **Syntax highlighting**: Full support for PenguScript 0.10+ in `syntax/pengus.vim`
+  (all keywords, soft keywords `frozen`/`borrowed`, primitive & container types,
+  interpolation `"{var}"`, raw strings `r"..."`, multiline triples `"""`, and operators)
+  plus automatic Treesitter when a `pengus` parser is available (Neovim ≥ 0.10).
+- **Smart indentation**: automatic indentation calculation for colon-based blocks
+  (`indent/pengus.vim`).
+- **Commands**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguTest`, `:PenguFmt`,
   `:PenguLspStart`, `:PenguLspRestart`, `:PenguLspLog`.
 - **Optional format on save** (`pengu fmt`) using a safe temporary-file step
   (never loses unsaved changes).
-- **Optional LuaSnip snippets** (`weave`, `rune`, `omen`, `if`, `unless`,
-  `while`, `for`, `judge`, `let`, `var`, `const`).
+- **Comprehensive snippets**: 50+ rich snippets available both as standard
+  VS Code format (`snippets/pengus.json` for LazyVim, blink.cmp, mini.snippets, etc.)
+  and native LuaSnip integration (`lua/pengus/snippets.lua`).
 - **No external dependencies**: you only need the `pengu` binary.
   nvim-lspconfig, cmp-nvim-lsp and LuaSnip are used only when installed.
 
@@ -200,14 +205,15 @@ vim.g.pengus_bin_path = "C:/tools/pengu.exe"
 | ----------------------- | --------------------------------------------------------------- |
 | `:PenguBuild [args...]` | Runs `pengu build [args...]`; output goes to the quickfix.      |
 | `:PenguRun [args...]`   | Runs `pengu run [args...]` in a new terminal.                   |
-| `:PenguCheck [args...]` | Runs `pengu check [args...]` and shows the result.              |
+| `:PenguCheck [args...]` | Runs `pengu check [args...]` and shows the result in quickfix.  |
+| `:PenguTest [args...]`  | Runs `pengu test [args...]` and shows test results in quickfix. |
 | `:PenguFmt [args...]`   | Formats the current file with `pengu fmt`.                      |
 | `:PenguLspStart`        | Starts the LSP on the current buffer.                           |
 | `:PenguLspRestart`      | Restarts the LSP server.                                        |
 | `:PenguLspLog`          | Opens the LSP log file.                                         |
 
 Lua equivalents are also available (`require("pengus").build()`, `.run()`,
-`.check()`, `.format()`, `.restart()`, `.open_log()`).
+`.check()`, `.test()`, `.format()`, `.restart()`, `.open_log()`).
 
 ## 🧠 LSP
 
@@ -229,50 +235,68 @@ require("lspconfig").pengus.setup {
 }
 ```
 
-## 📐 Filetype & highlighting
+## 📐 Filetype, syntax & indentation
 
 | Extension      | Filetype |
 | -------------- | -------- |
 | `foo.pengu`    | `pengus` |
 | `foo.d.pengu`  | `pengus` |
 
-The `syntax/pengus.vim` file provides classic highlighting (keywords, types,
-`#`/`##` comments, strings, numbers, operators, delimiters…). When a
-**Treesitter** `pengus` parser exists and Neovim ≥ 0.10, the plugin tries to
-use it automatically (`highlight.treesitter = "auto"`).
+- **Syntax**: `syntax/pengus.vim` provides complete highlighting for PenguScript
+  0.10+ (keywords, soft keywords `frozen`/`borrowed`, types, containers,
+  string interpolation `"{name}"`, raw strings, triple multiline quotes, and operators).
+  When a **Treesitter** `pengus` parser is installed and Neovim ≥ 0.10, the plugin
+  can use it automatically (`highlight.treesitter = "auto"`).
+- **Indentation**: `indent/pengus.vim` automatically indents lines after colons `:`
+  and dedents on `else:` or `when`.
 
-## ✂️ Snippets (LuaSnip)
+## ✂️ Snippets
 
-With LuaSnip installed and its expansion configured, these are available:
+Snippets are provided in both **standard VS Code JSON format** (`snippets/pengus.json`,
+auto-discovered by LazyVim, `blink.cmp`, `mini.snippets`, etc.) and native **LuaSnip**:
 
-| Trigger | Expansion                          |
-| ------- | ---------------------------------- |
-| `weave` | `weave name { … }` block           |
-| `rune`  | `rune name { … }` block            |
-| `omen`  | `omen name { … }` block            |
-| `if`    | `if condition { … }`               |
-| `unless`| `unless condition { … }`           |
-| `while` | `while condition { … }`            |
-| `for`   | `for x in collection { … }`        |
-| `judge` | `judge expr { when case { … } }`   |
-| `let`   | `let x = value` declaration        |
-| `var`   | `var x = value` declaration        |
-| `const` | `const X = value` declaration      |
-
-With Lazy.nvim, add `"L3MON4D3/LuaSnip"` as a dependency of the plugin.
-
-## 🩺 Troubleshooting
-
-- **“pengu binary not found”**: install PenguScript or set
-  `vim.g.pengus_bin_path` / `$PENGU_BIN_PATH`.
-- **The LSP does not start**: run `:PenguLspRestart` and check `:PenguLspLog`.
-  Make sure the filetype is `pengus` (`:set ft?`) and that `pengu lsp --stdio`
-  responds in the terminal.
-- **No highlighting**: enable syntax with `:syntax on` and inspect the groups
-  with `:hi PengusKeyword`. For Treesitter, install the `pengus` parser
-  (`require("nvim-treesitter.install").update { with_sync = true }`).
-- **The commands are missing**: make sure the plugin is on your `runtimepath`
-  and reload with `:source $MYVIMRC` or restart Neovim.
+| Trigger | Expansion / Description |
+| ------- | ----------------------- |
+| `main` | `weave main into int:` entry point |
+| `mainv` | `weave main into void:` |
+| `weave` | `weave name with params into type:` |
+| `weaveno` | `weave name into type:` |
+| `weavein` | `weave inline name with ... into ...:` |
+| `weaverit`| `weave ritual name ... into ...:` static method |
+| `weaveshard`| `weave name shard T with ... into ...:` generic |
+| `lambda` | `lambda x as int into expr` |
+| `declare` | `declare c_func with ... into ...` |
+| `declarevar` | `declare printf with fmt as ref to frozen char, ... into int` |
+| `rune` | `rune Name:` struct definition |
+| `runeshard` | `rune Name shard T:` generic struct |
+| `echo` | `echo Name:` union definition |
+| `omen` | `omen Name:` enum / algebraic data type |
+| `omenpayload`| `omen Name:` with variant payload |
+| `concept` | `concept Name:` trait / interface definition |
+| `bind` | `bind Type with Concept:` implementation |
+| `enchanting` | `enchanting Type:` methods block |
+| `let` / `var` | `let x as type is val` / `var x as type is val` |
+| `letb` / `varb` | `let borrowed x ...` / `var borrowed x ...` non-owning |
+| `const` | `const NAME as type is val` |
+| `static` | `static var x as type is val` |
+| `set` | `set x is val` / `set .field is val` |
+| `if` / `ifelse` | `if cond:` / `else:` block |
+| `ifmaybe` | `if u as User is user:` maybe unwrap binding |
+| `unless` | `unless cond:` |
+| `while` | `while cond:` |
+| `for` | `for item in col:` |
+| `forfrom` / `forstep` | `for i from 0 to 10:` |
+| `judge` | `judge expr:` pattern matching |
+| `withblock` | `var x as Type with:` builder block |
+| `withtarget` | `with target:` edit block |
+| `calling` | `calling func with args` |
+| `banish` | `banish ptr` |
+| `deferbanish` | `defer banish ptr` |
+| `try` | `try calling func with args` |
+| `orelse` / `orblock` | error handling / fallback |
+| `test` | `test "name":` unit test block |
+| `whencc` / `whendebug` | compile-time conditional blocks |
+| `print` / `println` | console print statements |
 
 ## 📁 Repository structure
 
@@ -280,19 +304,24 @@ With Lazy.nvim, add `"L3MON4D3/LuaSnip"` as a dependency of the plugin.
 penguscript-nvim/
 ├── README.md
 ├── LICENSE            (MIT)
+├── package.json       (manifest for VS Code / Neovim snippet discovery)
 ├── doc/pengus.txt     (:help docs)
+├── snippets/
+│   └── pengus.json    (VS Code format snippets)
+├── indent/
+│   └── pengus.vim     (auto-indentation)
 ├── lua/pengus/
 │   ├── init.lua       (entry point / public API)
 │   ├── config.lua     (default options and merge)
 │   ├── lsp.lua        (LSP configuration)
 │   ├── commands.lua   (:Pengu* commands and formatting)
 │   ├── highlights.lua (optional Treesitter and colors)
-│   ├── snippets.lua   (optional LuaSnip snippets)
+│   ├── snippets.lua   (LuaSnip & VS Code loader)
 │   └── util.lua       (internal utilities)
 ├── plugin/pengus.vim  (commands and auto-load)
 ├── ftdetect/pengus.vim
 ├── ftplugin/pengus.vim
-└── syntax/pengus.vim  (fallback highlighting)
+└── syntax/pengus.vim  (comprehensive syntax highlighting)
 ```
 
 ## 🤝 Contributing

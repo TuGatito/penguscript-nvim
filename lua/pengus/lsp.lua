@@ -64,7 +64,8 @@ end
 --- Clientes `pengus` (opcionalmente solo los adjuntos a `bufnr`).
 function M.active_clients(bufnr)
   local name = M.server_name()
-  local clients = vim.lsp.get_active_clients()
+  local get_clients = vim.lsp.get_clients or vim.lsp.get_active_clients
+  local clients = get_clients()
   local out = {}
   for _, cl in ipairs(clients) do
     if cl.name == name then

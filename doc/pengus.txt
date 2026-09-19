@@ -87,6 +87,7 @@ lspconfig se regeneran con la nueva configuración.
                            en la quickfix si falla o hay avisos.
   :PenguRun [args...]      Ejecuta `pengu run [args...]` en una terminal.
   :PenguCheck [args...]    Ejecuta `pengu check [args...]` (quickfix).
+  :PenguTest [args...]     Ejecuta `pengu test [args...]` (quickfix).
   :PenguFmt [args...]      Formatea el archivo actual con `pengu fmt`.
   :PenguLspStart           Arranca el LSP en el buffer actual.
   :PenguLspRestart         Reinicia el servidor LSP.
@@ -129,6 +130,7 @@ Para desactivarlo: format_on_save = false.
   require("pengus").build(args?)     Equivalente a :PenguBuild.
   require("pengus").run(args?)       Equivalente a :PenguRun.
   require("pengus").check(args?)     Equivalente a :PenguCheck.
+  require("pengus").test(args?)      Equivalente a :PenguTest.
   require("pengus").format(args?)    Equivalente a :PenguFmt.
   require("pengus").restart()        Equivalente a :PenguLspRestart.
   require("pengus").open_log()       Equivalente a :PenguLspLog.

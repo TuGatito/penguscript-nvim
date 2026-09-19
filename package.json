@@ -1,0 +1,15 @@
+{
+  "name": "penguscript-nvim",
+  "version": "0.10.0",
+  "description": "Full PenguScript language support for Neovim / LazyVim",
+  "author": "TuGatito",
+  "license": "MIT",
+  "contributes": {
+    "snippets": [
+      {
+        "language": "pengus",
+        "path": "./snippets/pengus.json"
+      }
+    ]
+  }
+}

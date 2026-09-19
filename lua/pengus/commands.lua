@@ -159,6 +159,19 @@ function M.check(...)
   run_to_qf("pengu check", cmd, work_dir(vim.api.nvim_get_current_buf()))
 end
 
+function M.test(...)
+  local c = cfg()
+  local bin = get_bin()
+  if not bin then
+    return
+  end
+  local testopts = (c.commands and c.commands.test) or {}
+  local args = append(testopts.args, normalize_args(...))
+  local cmd = append({ bin, "test" }, args)
+  run_to_qf("pengu test", cmd, work_dir(vim.api.nvim_get_current_buf()))
+end
+
+
 --------------------------------------------------------------------------------
 -- :PenguRun (terminal)
 --------------------------------------------------------------------------------

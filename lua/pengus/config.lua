@@ -71,6 +71,7 @@ local defaults = {
     },
     build = { args = nil }, -- argumentos extra por defecto para build
     check = { args = nil }, -- argumentos extra por defecto para check
+    test = { args = nil }, -- argumentos extra por defecto para test
     fmt = { args = nil }, -- argumentos extra por defecto para fmt
   },
 
