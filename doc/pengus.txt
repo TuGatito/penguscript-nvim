@@ -22,9 +22,12 @@ penguscript-nvim proporciona soporte completo para PenguScript
     detección de la raíz del proyecto (pengu.yaml, pengu.toml, Pengu.toml,
     .git).
   - Resaltado de sintaxis: Treesitter si hay parser `pengus` (Neovim >= 0.10)
-    con respaldo clásico en syntax/pengus.vim.
-  - Comandos :PenguBuild, :PenguRun, :PenguCheck, :PenguFmt.
-  - Snippets opcionales para LuaSnip.
+    con respaldo clásico en syntax/pengus.vim (versión 0.15+ / 0.14.x, con
+    soporte para derive, cyclus, donum, conceptos, colecciones y 52+ módulos stdlib).
+  - Sangría automática sensible a bloques y palabras clave (indent/pengus.vim).
+  - Comandos :PenguBuild, :PenguRun, :PenguCheck, :PenguTest, :PenguFmt,
+    :PenguLspStart, :PenguLspRestart, :PenguLspLog.
+  - Colección de 70+ snippets en formato VSCode y nativo de LuaSnip.
 
 Requiere el binario `pengu` en el $PATH (o configurar su ruta). No depende de
 otros plugins; nvim-lspconfig y LuaSnip solo se usan si están instalados.

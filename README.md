@@ -15,17 +15,18 @@ dependencies, compatible with Neovim **0.8+** on Windows, Linux and macOS.
   `pengu.toml`, `Pengu.toml` and `.git` walking up from the file.
 - **`pengus` filetype** for `.pengu` and `.d.pengu` files (dual mechanism:
   `vim.filetype.add` + `ftdetect`).
-- **Syntax highlighting**: Full support for PenguScript 0.10+ in `syntax/pengus.vim`
-  (all keywords, soft keywords `frozen`/`borrowed`, primitive & container types,
+- **Syntax highlighting**: Full support for PenguScript (0.15+ / 0.14.x) in `syntax/pengus.vim`
+  (all keywords including `derive`, `cyclus`, `donum`, built-in concepts `Num`, `Par`, `Ordo`, ...,
+  soft keywords `frozen`/`borrowed`, primitive & container types, all 52 standard library modules + `arca`,
   interpolation `"{var}"`, raw strings `r"..."`, multiline triples `"""`, and operators)
   plus automatic Treesitter when a `pengus` parser is available (Neovim ≥ 0.10).
 - **Smart indentation**: automatic indentation calculation for colon-based blocks
-  (`indent/pengus.vim`).
+  and dedent patterns (`else:`, `else ->`, `else when`, `when`) in `indent/pengus.vim`.
 - **Commands**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguTest`, `:PenguFmt`,
   `:PenguLspStart`, `:PenguLspRestart`, `:PenguLspLog`.
 - **Optional format on save** (`pengu fmt`) using a safe temporary-file step
   (never loses unsaved changes).
-- **Comprehensive snippets**: 50+ rich snippets available both as standard
+- **Comprehensive snippets**: 70+ rich snippets available both as standard
   VS Code format (`snippets/pengus.json` for LazyVim, blink.cmp, mini.snippets, etc.)
   and native LuaSnip integration (`lua/pengus/snippets.lua`).
 - **No external dependencies**: you only need the `pengu` binary.
@@ -243,12 +244,13 @@ require("lspconfig").pengus.setup {
 | `foo.d.pengu`  | `pengus` |
 
 - **Syntax**: `syntax/pengus.vim` provides complete highlighting for PenguScript
-  0.10+ (keywords, soft keywords `frozen`/`borrowed`, types, containers,
-  string interpolation `"{name}"`, raw strings, triple multiline quotes, and operators).
-  When a **Treesitter** `pengus` parser is installed and Neovim ≥ 0.10, the plugin
-  can use it automatically (`highlight.treesitter = "auto"`).
+  (0.15+ / 0.14.x) (keywords including `derive`, `cyclus`, `donum`, built-in concepts
+  `Num`, `Par`, `Ordo`, ..., soft keywords `frozen`/`borrowed`, types, containers,
+  all 52 standard library modules + `arca`, string interpolation `"{name}"`, raw strings,
+  triple multiline quotes, and operators). When a **Treesitter** `pengus` parser is installed
+  and Neovim ≥ 0.10, the plugin can use it automatically (`highlight.treesitter = "auto"`).
 - **Indentation**: `indent/pengus.vim` automatically indents lines after colons `:`
-  and dedents on `else:` or `when`.
+  and dedents on `else:`, `else ->`, `else when`, or `when`.
 
 ## ✂️ Snippets
 
@@ -264,39 +266,69 @@ auto-discovered by LazyVim, `blink.cmp`, `mini.snippets`, etc.) and native **Lua
 | `weavein` | `weave inline name with ... into ...:` |
 | `weaverit`| `weave ritual name ... into ...:` static method |
 | `weaveshard`| `weave name shard T with ... into ...:` generic |
+| `weaveshardwhere` | `weave name shard T where T: Num with ... into ...:` with bounds |
 | `lambda` | `lambda x as int into expr` |
 | `declare` | `declare c_func with ... into ...` |
 | `declarevar` | `declare printf with fmt as ref to frozen char, ... into int` |
 | `rune` | `rune Name:` struct definition |
 | `runeshard` | `rune Name shard T:` generic struct |
+| `runederive` | `rune Name derive Par, Ordo:` struct with derived concepts |
+| `runecyclus` | `rune Node cyclus shard T:` self-referential struct |
 | `echo` | `echo Name:` union definition |
 | `omen` | `omen Name:` enum / algebraic data type |
+| `omenstr` | `omen Name with string:` string-valued omen |
 | `omenpayload`| `omen Name:` with variant payload |
 | `concept` | `concept Name:` trait / interface definition |
+| `conceptshard` | `concept Name shard T:` generic concept |
+| `conceptwhere` | `concept Name shard T where T: Bound:` bounded concept |
 | `bind` | `bind Type with Concept:` implementation |
 | `enchanting` | `enchanting Type:` methods block |
+| `enchantingshard`| `enchanting map of shard K to shard V:` generic container enchanting |
+| `alias` / `seal` | `alias Name as Type` / `seal UserId as int` |
 | `let` / `var` | `let x as type is val` / `var x as type is val` |
+| `letin` / `varin` | Inferred local bindings (`let x is val` / `var x is val`) |
 | `letb` / `varb` | `let borrowed x ...` / `var borrowed x ...` non-owning |
-| `const` | `const NAME as type is val` |
-| `static` | `static var x as type is val` |
-| `set` | `set x is val` / `set .field is val` |
+| `destructlet` | `let (x, y) is record` destructuring |
+| `destructvar` | `var (id, label) as (int, string) is record` typed destructuring |
+| `const` | `const NAME as type is val` compile-time constant |
+| `static` | `static var x as type is val` function-static variable |
+| `donum` | `donum Type` zero/default value expression |
+| `set` / `setdot` | `set x is val` / `set .field is val` |
+| `setadd` / `setsub` | `set x += val` / `set x -= val` compound assignments |
+| `setmul` / `setdiv` | `set x *= val` / `set x /= val` compound assignments |
 | `if` / `ifelse` | `if cond:` / `else:` block |
 | `ifmaybe` | `if u as User is user:` maybe unwrap binding |
+| `ifexpr` | `if cond then true_val else false_val` ternary expression |
 | `unless` | `unless cond:` |
 | `while` | `while cond:` |
-| `for` | `for item in col:` |
-| `forfrom` / `forstep` | `for i from 0 to 10:` |
-| `judge` | `judge expr:` pattern matching |
+| `for` / `forin` | `for item in col:` iteration loop |
+| `forfrom` / `forstep` | `for i from 0 to 10:` / with `step 1` |
+| `foridx` | `for i, item in col:` indexed iteration |
+| `forcomp` | `for x in col then expr` list comprehension |
+| `forcompwhen` | `for x in col when cond then expr` filtered list comprehension |
+| `judge` / `when` | `judge expr: when Pattern -> result else -> fallback` pattern match |
+| `do` | `do:` block expression evaluating to its tail value |
 | `withblock` | `var x as Type with:` builder block |
 | `withtarget` | `with target:` edit block |
-| `calling` | `calling func with args` |
-| `banish` | `banish ptr` |
-| `deferbanish` | `defer banish ptr` |
-| `try` | `try calling func with args` |
-| `orelse` / `orblock` | error handling / fallback |
+| `withcol` | `with collection:` in-place collection builder (`.push`, `.put`, etc.) |
+| `withnested` | `set .field is with:` nested builder block |
+| `calling` / `call` | `calling func with args` / without args |
+| `banish` | `banish ptr` explicit heap deallocation |
+| `defer` / `deferbanish` | `defer stmt` / `defer banish ptr` LIFO scope cleanup |
+| `errdefer` / `errdeferbanish` | `errdefer stmt` / `errdefer banish ptr` error cleanup |
+| `try` | `try calling func with args` unwrap & error propagation |
+| `orelse` / `orreturn` | `maybe_val or else fallback` / `expr or return err` |
+| `orblock` | `calling risky or: let err is error` failure block |
+| `sigil` / `essence` | `sigil of var` (&x) / `essence of ptr` (*ptr) |
+| `bytesof` | `bytes of str` byte pointer view |
+| `transmute` / `sizeof` | `transmute val to Type` / `size of Type` |
 | `test` | `test "name":` unit test block |
-| `whencc` / `whendebug` | compile-time conditional blocks |
-| `print` / `println` | console print statements |
+| `whencc` / `whenos` | `when cond:` / `when os == "..."` compile-time conditional |
+| `whendebug` / `whenchain` | `when debug:` / `else when ... else:` compile-time chains |
+| `print` / `println` | Builtin `print` / `std.spark.println` |
+| `printspark` | `std.spark.print` (without newline) |
+| `arcastr` / `arcaptr` / `arcabytes` | Embedded asset helpers (`arca.string`, `arca.ptr`, `arca.bytes`) |
+| `ffislice` / `ffistr` / `fficstr` | C FFI bridge helpers (`slice_from_ptr`, `string_from_cstr`, `cstr_from_string`) |
 
 ## 📁 Repository structure
 

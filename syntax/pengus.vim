@@ -5,7 +5,7 @@
 " Maintainer: TuGatito <53541345+TuGatito@users.noreply.github.com>
 " License: MIT
 "
-" Resaltado de sintaxis clásico para PenguScript (versión 0.10+).
+" Resaltado de sintaxis clásico para PenguScript (versión 0.15+ / 0.14.x).
 " Basado en la especificación oficial de LANGUAGE.md.
 " Si existe un parser Treesitter `pengus` y Neovim >= 0.10, el plugin intenta
 " usar Treesitter y este archivo actúa como red de seguridad y respaldo.
@@ -21,6 +21,7 @@ syn keyword pengusConditional if unless else when judge then
 syn keyword pengusRepeat    while for in from to step
 syn keyword pengusKeyword   weave declare ritual inline lambda test
                             \ rune echo omen concept bind enchanting alias seal
+                            \ derive cyclus donum
                             \ shard where of calling with into as is many
                             \ let var const static set
                             \ return break continue defer errdefer banish
@@ -29,6 +30,11 @@ syn keyword pengusKeyword   weave declare ritual inline lambda test
 
 " Soft keywords (actúan como modificadores en posiciones específicas)
 syn keyword pengusSoftKeyword frozen borrowed
+
+" ---------------------------------------------------------------------------
+" Conceptos integrados (built-in concepts en global scope)
+" ---------------------------------------------------------------------------
+syn keyword pengusConcept   Num Integrum Par Ordo Vinculum Imago Nexus Forma Iterabilis Donum
 
 " ---------------------------------------------------------------------------
 " Constantes y valores especiales
@@ -51,7 +57,7 @@ syn keyword pengusType      size_t int8_t int16_t int32_t int64_t
 syn keyword pengusType      uint8_t uint16_t uint32_t uint64_t va_list
 syn keyword pengusType      array list slice map maybe result range ref
 
-" Tipos definidos por el usuario (PascalCase: convencion PenguScript)
+" Tipos definidos por el usuario (PascalCase: convención PenguScript)
 syn match pengusCustomType  "\<[A-Z][a-zA-Z0-9_]*\>"
 
 " Nombres de declaraciones (funciones, tipos, declares)
@@ -62,11 +68,20 @@ syn match pengusTypeDef    "\<\%(rune\|echo\|omen\|concept\|bind\|enchanting\|al
 " Módulos e inclusión
 syn keyword pengusInclude   import include link insignia
 
-" Módulos comunes de la librería estándar (std.*)
-syn keyword pengusModule    spark oracle scrolls compass archivum cipher chronicle
+" Módulos de la librería estándar (std.* y arca de assets integrados)
+" Módulos puros (27):
+syn keyword pengusModule    spark scrolls oracle compass archivum cipher chronicle
                             \ lot rites whisper ward trial tally atlas coven
                             \ regulus parchment seal precis filum loom invoke ffi
-                            \ raylib sqlite3 webui miniaudio tomlum uuid yaml
+                            \ celeris xlsx ledger arithmancy
+" Módulos de bindings C nativos (.d.pengu, 25):
+syn keyword pengusModule    raylib raymath rlgl rlights raygui sqlite3 webui
+                            \ miniaudio tomlum yaml uuid xxhash xlsxio imago
+                            \ typis scriptor perlinum stb_image_resize2
+                            \ stb_herringbone_wang_tile nanosvg nanosvgrast
+                            \ minicoro datastructura fenestra pactum
+" Módulo de assets generados:
+syn keyword pengusModule    arca
 
 " Built-in print
 syn keyword pengusBuiltin   print
@@ -93,7 +108,7 @@ syn match pengusNumber "\<\d[0-9_]*\>"
 " ---------------------------------------------------------------------------
 syn match pengusEscape contained display "\\\(.\|x\x\{2}\|u\x\{4}\|U\x\{8}\)"
 syn region pengusInterpolation contained matchgroup=pengusInterpolationDelimiter start="{" end="}"
-      \ contains=pengusKeyword,pengusConditional,pengusRepeat,pengusBoolean,pengusSpecial,pengusType,pengusCustomType,pengusNumber,pengusOperator,pengusDelimiter,pengusBuiltin,pengusModule
+      \ contains=pengusKeyword,pengusConditional,pengusRepeat,pengusBoolean,pengusSpecial,pengusType,pengusCustomType,pengusConcept,pengusNumber,pengusOperator,pengusDelimiter,pengusBuiltin,pengusModule
 
 " ---------------------------------------------------------------------------
 " Cadenas y caracteres
@@ -145,6 +160,7 @@ hi def link pengusSoftKeyword          Keyword
 hi def link pengusBoolean              Boolean
 hi def link pengusSpecial              Special
 hi def link pengusCompileConst         Constant
+hi def link pengusConcept              Structure
 hi def link pengusType                 Type
 hi def link pengusCustomType           Type
 hi def link pengusFunction             Function

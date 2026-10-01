@@ -11,7 +11,7 @@ let b:did_indent = 1
 
 setlocal autoindent
 setlocal indentexpr=GetPengusIndent()
-setlocal indentkeys+=<:>,0=else:,0=when\ ,0=elif
+setlocal indentkeys+=<:>,0=else:,0=else\ ->,0=else\ when,0=when\ 
 
 let b:undo_indent = "setlocal autoindent< indentexpr< indentkeys<"
 
@@ -38,9 +38,9 @@ function! GetPengusIndent()
     let l:ind += shiftwidth()
   endif
 
-  " Si la línea actual es 'else:', o una rama 'when ...' dentro de un judge, o 'elif', reducir sangría
+  " Si la línea actual es 'else:', 'else ->', 'else when ...', o 'when ...', reducir sangría
   let l:curclean = substitute(l:curline, '^\s*', '', '')
-  if l:curclean =~ '^\%(else:\|when\s\+\)'
+  if l:curclean =~ '^\%(else:\|else\s*->\|else\s\+when\|when\s\+\)'
     let l:ind -= shiftwidth()
   endif
 

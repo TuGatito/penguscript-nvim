@@ -56,6 +56,14 @@
     ],
     "description": "Función genérica con parámetro de tipo shard"
   },
+  "Generic Function with Bounds (shard where)": {
+    "prefix": "weaveshardwhere",
+    "body": [
+      "weave ${1:name} shard ${2:T} where ${2:T}: ${3:Num} with ${4:x} as ${2:T} into ${5:T}:",
+      "\t$0"
+    ],
+    "description": "Función genérica con parámetro shard y restricciones de concept (where)"
+  },
   "Lambda": {
     "prefix": "lambda",
     "body": [
@@ -102,6 +110,25 @@
     ],
     "description": "Estructura genérica con parámetro shard"
   },
+  "Struct with Derived Concepts (derive)": {
+    "prefix": "runederive",
+    "body": [
+      "rune ${1:Name} derive ${2:Par, Ordo}:",
+      "\t${3:field} as ${4:int}",
+      "\t$0"
+    ],
+    "description": "Estructura rune con implementación automática de concepts (Par, Ordo, Vinculum, Imago, Nexus)"
+  },
+  "Self-referential Struct (cyclus)": {
+    "prefix": "runecyclus",
+    "body": [
+      "rune ${1:Node} cyclus shard ${2:T}:",
+      "\t${3:value} as ${2:T}",
+      "\t${4:next} as maybe ref to ${1:Node} of ${2:T}",
+      "\t$0"
+    ],
+    "description": "Estructura autorreferencial explícita (cyclus con indirección por puntero)"
+  },
   "Union (echo)": {
     "prefix": "echo",
     "body": [
@@ -119,6 +146,16 @@
       "\t${3:Two}"
     ],
     "description": "Definición de enumeración o tipo suma (omen)"
+  },
+  "String-Valued Omen": {
+    "prefix": "omenstr",
+    "body": [
+      "omen ${1:Color} with string:",
+      "\t${2:Red}",
+      "\t${3:Green}",
+      "\t${4:Blue}"
+    ],
+    "description": "Enumeración de strings (cada variante evalúa a un PenguString con su propio nombre)"
   },
   "Enum with payload (omen)": {
     "prefix": "omenpayload",
@@ -138,6 +175,22 @@
     ],
     "description": "Definición de interfaz / trait (concept)"
   },
+  "Generic Concept (concept shard)": {
+    "prefix": "conceptshard",
+    "body": [
+      "concept ${1:Name} shard ${2:T}:",
+      "\tweave ${3:method} with ${4:item} as ${2:T} into ${5:void}"
+    ],
+    "description": "Contrato de compile-time genérico parametrizado con shard"
+  },
+  "Concept with Bounds (where)": {
+    "prefix": "conceptwhere",
+    "body": [
+      "concept ${1:Name} shard ${2:T} where ${2:T}: ${3:OtherConcept}:",
+      "\tweave ${4:method} with ${5:item} as ${2:T} into ${6:void}"
+    ],
+    "description": "Concept genérico con restricción de bound sobre el parámetro"
+  },
   "Bind (implement concept)": {
     "prefix": "bind",
     "body": [
@@ -156,6 +209,15 @@
       "\t\t$0"
     ],
     "description": "Bloque enchanting para añadir métodos a una rune / tipo"
+  },
+  "Generic Container Enchanting": {
+    "prefix": "enchantingshard",
+    "body": [
+      "enchanting ${1|map of shard K to shard V,list of shard T,slice of shard T,maybe shard T,result of shard T to shard E|}:",
+      "\tweave ${2:method} with ${3:param} as ${4:type} into ${5:void}:",
+      "\t\t$0"
+    ],
+    "description": "Encantamiento genérico sobre contenedores estándar (monomorfizado bajo demanda)"
   },
   "Type alias": {
     "prefix": "alias",
@@ -220,6 +282,20 @@
     ],
     "description": "Variable inmutable prestada no propietaria"
   },
+  "Destructuring binding (let)": {
+    "prefix": "destructlet",
+    "body": [
+      "let (${1:x}, ${2:y}) is ${3:record_or_container}"
+    ],
+    "description": "Desestructuración inmutable de rune, array, list o slice"
+  },
+  "Destructuring binding typed (var)": {
+    "prefix": "destructvar",
+    "body": [
+      "var (${1:id}, ${2:label}) as (${3:int}, ${4:string}) is ${5:record_or_container}"
+    ],
+    "description": "Desestructuración mutable con tipos explícitos por elemento"
+  },
   "Constant (const)": {
     "prefix": "const",
     "body": [
@@ -233,6 +309,13 @@
       "static var ${1:name} as ${2:type} is ${3:value}"
     ],
     "description": "Variable estática de función (conserva estado entre llamadas)"
+  },
+  "Default value (donum)": {
+    "prefix": "donum",
+    "body": [
+      "donum ${1:Type}"
+    ],
+    "description": "Valor cero/por defecto en tiempo de compilación (compound literal (T){0})"
   },
   "Assignment (set)": {
     "prefix": "set",
@@ -253,7 +336,28 @@
     "body": [
       "set ${1:target} += ${2:value}"
     ],
-    "description": "Asignación compuesta (suma / concatenación de string)"
+    "description": "Asignación compuesta suma numérica (+)"
+  },
+  "Compound assignment subtract (set -=)": {
+    "prefix": "setsub",
+    "body": [
+      "set ${1:target} -= ${2:value}"
+    ],
+    "description": "Asignación compuesta resta (-)"
+  },
+  "Compound assignment multiply (set *=)": {
+    "prefix": "setmul",
+    "body": [
+      "set ${1:target} *= ${2:value}"
+    ],
+    "description": "Asignación compuesta multiplicación (*)"
+  },
+  "Compound assignment divide (set /=)": {
+    "prefix": "setdiv",
+    "body": [
+      "set ${1:target} /= ${2:value}"
+    ],
+    "description": "Asignación compuesta división (/)"
   },
   "If statement": {
     "prefix": "if",
@@ -353,6 +457,13 @@
     ],
     "description": "Comprensión de lista 'for ... then ...'"
   },
+  "Filtered list comprehension": {
+    "prefix": "forcompwhen",
+    "body": [
+      "for ${1:x} in ${2:collection} when ${3:condition} then ${4:expr}"
+    ],
+    "description": "Comprensión de lista con filtro condicional 'for ... when ... then ...'"
+  },
   "Pattern matching (judge)": {
     "prefix": "judge",
     "body": [
@@ -394,6 +505,24 @@
       "\t$0"
     ],
     "description": "Modificación en bloque de una estructura existente"
+  },
+  "Collection with block": {
+    "prefix": "withcol",
+    "body": [
+      "with ${1:collection}:",
+      "\tcalling .${2|push,append,clear,put,remove|} with ${3:arg}",
+      "\t$0"
+    ],
+    "description": "Bloque with para mutación in-place de listas y mapas con métodos abreviados"
+  },
+  "Nested with builder": {
+    "prefix": "withnested",
+    "body": [
+      "set .${1:field} is with:",
+      "\tset .${2:subfield} is ${3:value}",
+      "\t$0"
+    ],
+    "description": "Constructor with: anidado dentro de otro builder (infiere el tipo de destino)"
   },
   "Inline struct literal (with)": {
     "prefix": "withlit",
@@ -530,6 +659,13 @@
     ],
     "description": "Desreferenciar puntero (*ptr)"
   },
+  "Borrow bytes view (bytes of)": {
+    "prefix": "bytesof",
+    "body": [
+      "bytes of ${1:string_or_byte_array}"
+    ],
+    "description": "Préstamo de puntero de bytes (ref to frozen byte para string, ref to byte para array)"
+  },
   "Transmute unsafe cast": {
     "prefix": "transmute",
     "body": [
@@ -576,6 +712,18 @@
     ],
     "description": "Compilación condicional por sistema operativo"
   },
+  "Chained compile-time conditional (when / else when)": {
+    "prefix": "whenchain",
+    "body": [
+      "when ${1:os == \"windows\"}:",
+      "\t$2",
+      "else when ${3:os == \"linux\"}:",
+      "\t$4",
+      "else:",
+      "\t$0"
+    ],
+    "description": "Cadena de compilación condicional con 'else when' y 'else:'"
+  },
   "Print builtin": {
     "prefix": "print",
     "body": [
@@ -589,5 +737,54 @@
       "calling spark.println with \"${1:message}\""
     ],
     "description": "Imprimir línea por consola con std.spark.println"
+  },
+  "Print without newline (std.spark)": {
+    "prefix": "printspark",
+    "body": [
+      "calling spark.print with \"${1:message}\""
+    ],
+    "description": "Imprimir texto por consola sin salto de línea con std.spark.print"
+  },
+  "Arca asset string": {
+    "prefix": "arcastr",
+    "body": [
+      "calling arca.string with \"${1:asset_path}\""
+    ],
+    "description": "Obtener contenido de asset incrustado como cadena propia (string)"
+  },
+  "Arca asset pointer": {
+    "prefix": "arcaptr",
+    "body": [
+      "calling arca.ptr with \"${1:asset_path}\""
+    ],
+    "description": "Puntero directo a los bytes de asset en .rodata (ref to frozen void)"
+  },
+  "Arca asset bytes slice": {
+    "prefix": "arcabytes",
+    "body": [
+      "calling arca.bytes with \"${1:asset_path}\""
+    ],
+    "description": "Vista slice no propietaria sobre los bytes del asset incrustado (slice of byte)"
+  },
+  "FFI slice from pointer": {
+    "prefix": "ffislice",
+    "body": [
+      "calling ffi.slice_from_ptr with ${1:ptr}, ${2:count}"
+    ],
+    "description": "Crear vista slice sobre puntero C crudo (std.ffi.slice_from_ptr)"
+  },
+  "FFI string from C string": {
+    "prefix": "ffistr",
+    "body": [
+      "calling ffi.string_from_cstr with ${1:c_str}"
+    ],
+    "description": "Convertir char* C en PenguString propia (std.ffi.string_from_cstr)"
+  },
+  "FFI C string from string": {
+    "prefix": "fficstr",
+    "body": [
+      "calling ffi.cstr_from_string with ${1:pengu_str}"
+    ],
+    "description": "Obtener puntero C ref to char a partir de string (std.ffi.cstr_from_string)"
   }
 }
