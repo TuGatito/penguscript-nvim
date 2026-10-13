@@ -1,596 +1,853 @@
 {
-  "Main function": {
+  "Punto de entrada (main int)": {
     "prefix": "main",
     "body": [
       "weave main into int:",
-      "\t$0",
-      "\treturn 0"
+      "    $0",
+      "    return 0"
     ],
-    "description": "Función principal (entry point) con retorno int"
+    "description": "Punto de entrada `main` con retorno int"
   },
-  "Main function void": {
+  "Punto de entrada (main void)": {
     "prefix": "mainv",
     "body": [
       "weave main into void:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Función principal sin retorno (void)"
+    "description": "Punto de entrada `main` sin retorno (void)"
   },
-  "Function (weave)": {
+  "Función (weave)": {
     "prefix": "weave",
     "body": [
-      "weave ${1:name} with ${2:param} as ${3:type} into ${4:void}:",
-      "\t$0"
+      "weave ${1:nombre} with ${2:param} as ${3:int} into ${4:void}:",
+      "    $0"
     ],
     "description": "Declaración de función con parámetros y tipo de retorno"
   },
-  "Function without params": {
+  "Función sin parámetros": {
     "prefix": "weaveno",
     "body": [
-      "weave ${1:name} into ${2:void}:",
-      "\t$0"
+      "weave ${1:nombre} into ${2:void}:",
+      "    $0"
     ],
     "description": "Declaración de función sin parámetros"
   },
-  "Inline Function": {
+  "Función inline": {
     "prefix": "weavein",
     "body": [
-      "weave inline ${1:name} with ${2:param} as ${3:type} into ${4:int}:",
-      "\t$0"
+      "weave inline ${1:nombre} with ${2:param} as ${3:int} into ${4:int}:",
+      "    $0"
     ],
-    "description": "Función con modificador inline (C always_inline)"
+    "description": "Función con modificador `inline` (always_inline en C)"
   },
-  "Ritual Method (Static)": {
+  "Función inline (orden alternativo)": {
+    "prefix": "inlineweave",
+    "body": [
+      "inline weave ${1:nombre} with ${2:param} as ${3:int} into ${4:int}:",
+      "    $0"
+    ],
+    "description": "Función con `inline` antepuesto a `weave`"
+  },
+  "Método ritual (estático)": {
     "prefix": "weaverit",
     "body": [
-      "weave ritual ${1:name} with ${2:param} as ${3:type} into ${4:Type}:",
-      "\t$0"
+      "weave ritual ${1:new} with ${2:nombre} as string into ${3:Tipo}:",
+      "    return with ${4:campo} is ${2:nombre}"
     ],
-    "description": "Método ritual estático dentro de un bloque enchanting (llamado en el tipo Type.name)"
+    "description": "Método ritual estático (constructor `new`, `from_*`, `with_*`)"
   },
-  "Generic Function (shard)": {
+  "Función genérica (shard)": {
     "prefix": "weaveshard",
     "body": [
-      "weave ${1:name} shard ${2:T} with ${3:x} as ${2:T} into ${4:T}:",
-      "\t$0"
+      "weave ${1:nombre} shard ${2:T} with ${3:x} as ${2:T} into ${4:T}:",
+      "    $0"
     ],
-    "description": "Función genérica con parámetro de tipo shard"
+    "description": "Función genérica con un parámetro `shard`"
   },
-  "Generic Function with Bounds (shard where)": {
+  "Función genérica con bounds (where)": {
     "prefix": "weaveshardwhere",
     "body": [
-      "weave ${1:name} shard ${2:T} where ${2:T}: ${3:Num} with ${4:x} as ${2:T} into ${5:T}:",
-      "\t$0"
+      "weave ${1:nombre} shard ${2:T} where ${2:T}: ${3:Num} with ${4:xs} as list of ${2:T} into ${5:T}:",
+      "    $0"
     ],
-    "description": "Función genérica con parámetro shard y restricciones de concept (where)"
+    "description": "Función genérica con bounds `where T: Concept`"
   },
-  "Lambda": {
-    "prefix": "lambda",
+  "Función genérica con dos shards": {
+    "prefix": "weaveshard2",
     "body": [
-      "lambda ${1:x} as ${2:int} into ${0:x * 2}"
+      "weave ${1:nombre} shard ${2:T} and ${3:U} with ${4:a} as ${2:T}, ${5:b} as ${3:U} into ${6:T}:",
+      "    $0"
     ],
-    "description": "Función anónima (lambda)"
+    "description": "Función genérica con dos parámetros de tipo"
   },
-  "Lambda without params": {
-    "prefix": "lambdano",
+  "Función variádica (many T)": {
+    "prefix": "weavemany",
     "body": [
-      "lambda into ${0:42}"
+      "weave ${1:contar} with ${2:xs} as many ${3:int} into int:",
+      "    return (${2:xs} length to int)"
     ],
-    "description": "Función anónima sin parámetros"
+    "description": "Función variádica segura respaldada por slice (`many T`)"
   },
-  "External C declaration": {
+  "Declaración externa de C (declare)": {
     "prefix": "declare",
     "body": [
-      "declare ${1:c_function} with ${2:param} as ${3:type} into ${4:void}"
+      "declare ${1:c_func} with ${2:param} as ${3:ref to char} into ${4:int}"
     ],
-    "description": "Declaración de función externa en C"
+    "description": "Prototipo de función externa de C (sin cuerpo y sin `:`)"
   },
-  "Variadic C declaration": {
+  "Declaración variádica de C (...)": {
     "prefix": "declarevar",
     "body": [
       "declare ${1:printf} with ${2:fmt} as ref to frozen char, ... into ${3:int}"
     ],
-    "description": "Declaración de función externa en C con argumentos variádicos (...)"
+    "description": "Prototipo de C con argumentos variádicos crudos (`...`, solo en `declare`)"
   },
-  "Struct (rune)": {
+  "Lambda": {
+    "prefix": "lambda",
+    "body": [
+      "lambda ${1:x} as ${2:int} into ${3:x * 2}"
+    ],
+    "description": "Función anónima con parámetros tipados"
+  },
+  "Lambda sin parámetros": {
+    "prefix": "lambdano",
+    "body": [
+      "lambda into ${1:42}"
+    ],
+    "description": "Función anónima sin parámetros"
+  },
+  "Bloque C embebido (antiquus)": {
+    "prefix": "antiquus",
+    "body": [
+      "antiquus ${1:nombre} with ${2:x} as ${3:int} into ${4:int}:",
+      "    r\"\"\"",
+      "return ${2:x} < 0 ? -${2:x} : ${2:x};",
+      "\"\"\""
+    ],
+    "description": "Función con cuerpo C literal (el C va a columna 0)"
+  },
+  "Bloque C embebido exportado (@export)": {
+    "prefix": "antiquusexport",
+    "body": [
+      "@export(\"pengu_${1:modulo}_${2:nombre}\")",
+      "antiquus ${3:nombre} with ${4:x} as ${5:int} into ${6:int}:",
+      "    r\"\"\"",
+      "return ${4:x};",
+      "\"\"\""
+    ],
+    "description": "`antiquus` con símbolo C estable, raíz del DCE"
+  },
+  "Estructura (rune)": {
     "prefix": "rune",
     "body": [
-      "rune ${1:Name}:",
-      "\t${2:field} as ${3:int}",
-      "\t$0"
+      "rune ${1:Nombre}:",
+      "    ${2:campo} as ${3:string}",
+      "    $0"
     ],
-    "description": "Definición de estructura (rune / C struct)"
+    "description": "Definición de estructura (rune / struct de C)"
   },
-  "Generic Struct (rune shard)": {
+  "Estructura genérica (rune shard)": {
     "prefix": "runeshard",
     "body": [
-      "rune ${1:Name} shard ${2:T}:",
-      "\t${3:value} as ${2:T}",
-      "\t$0"
+      "rune ${1:Box} shard ${2:T}:",
+      "    ${3:value} as ${4:T}",
+      "    $0"
     ],
-    "description": "Estructura genérica con parámetro shard"
+    "description": "Estructura genérica con parámetro `shard`"
   },
-  "Struct with Derived Concepts (derive)": {
+  "Estructura con derive": {
     "prefix": "runederive",
     "body": [
-      "rune ${1:Name} derive ${2:Par, Ordo}:",
-      "\t${3:field} as ${4:int}",
-      "\t$0"
+      "rune ${1:Point} derive ${2:Par, Ordo, Vinculum, Imago, Nexus}:",
+      "    ${3:x} as ${4:int}",
+      "    ${5:y} as ${6:int}"
     ],
-    "description": "Estructura rune con implementación automática de concepts (Par, Ordo, Vinculum, Imago, Nexus)"
+    "description": "`rune` con implementaciones automáticas de concepts"
   },
-  "Self-referential Struct (cyclus)": {
+  "Estructura autorreferencial (cyclus)": {
     "prefix": "runecyclus",
     "body": [
-      "rune ${1:Node} cyclus shard ${2:T}:",
-      "\t${3:value} as ${2:T}",
-      "\t${4:next} as maybe ref to ${1:Node} of ${2:T}",
-      "\t$0"
+      "rune ${1:TreeNode} cyclus:",
+      "    ${2:value} as ${3:int}",
+      "    ${4:left} as maybe ref to ${5:TreeNode}",
+      "    ${6:right} as maybe ref to ${7:TreeNode}"
     ],
-    "description": "Estructura autorreferencial explícita (cyclus con indirección por puntero)"
+    "description": "`cyclus` recursivo con indirección por puntero"
   },
-  "Union (echo)": {
+  "Estructura autorreferencial genérica (cyclus shard)": {
+    "prefix": "runecyclusg",
+    "body": [
+      "rune ${1:Node} cyclus shard ${2:T}:",
+      "    ${3:value} as ${4:T}",
+      "    ${5:next} as maybe ref to ${6:Node} of ${7:T}",
+      "    ${8:children} as list of ${9:Node} of ${10:T}"
+    ],
+    "description": "`cyclus` genérico (lista enlazada / árbol)"
+  },
+  "Estructura empaquetada (@packed)": {
+    "prefix": "runepacked",
+    "body": [
+      "@packed",
+      "rune ${1:NetHeader}:",
+      "    ${2:magic} as u16",
+      "    ${3:version} as u8",
+      "    ${4:flags} as u8",
+      "    ${5:length} as u32"
+    ],
+    "description": "`rune` sin relleno: solo para fronteras binarias"
+  },
+  "Estructura alineada (@align)": {
+    "prefix": "runealign",
+    "body": [
+      "@align(${1:32})",
+      "rune ${2:AlignedBlock}:",
+      "    ${3:data} as array of f32 with size ${4:8}"
+    ],
+    "description": "`rune` con alineación explícita (SIMD, DMA, ...)"
+  },
+  "Unión (echo)": {
     "prefix": "echo",
     "body": [
-      "echo ${1:Name}:",
-      "\t${2:field1} as ${3:int}",
-      "\t${4:field2} as ${5:float}"
+      "echo ${1:Number}:",
+      "    ${2:i} as int",
+      "    ${3:f} as float"
     ],
-    "description": "Definición de unión C (echo / union)"
+    "description": "Unión de C (`echo`); leerla emite el warning W0002"
   },
-  "Enum / ADT (omen)": {
+  "Omen numérico": {
     "prefix": "omen",
     "body": [
-      "omen ${1:Name}:",
-      "\t${2:One}",
-      "\t${3:Two}"
+      "omen ${1:Direction}:",
+      "    ${2:North} is 0",
+      "    ${3:South} is 1",
+      "    ${4:East} is 2",
+      "    ${5:West} is 3"
     ],
-    "description": "Definición de enumeración o tipo suma (omen)"
+    "description": "Enum numérico con valores explícitos"
   },
-  "String-Valued Omen": {
+  "Omen con valor de string": {
     "prefix": "omenstr",
     "body": [
       "omen ${1:Color} with string:",
-      "\t${2:Red}",
-      "\t${3:Green}",
-      "\t${4:Blue}"
+      "    ${2:Red}",
+      "    ${3:Green}",
+      "    ${4:Blue}"
     ],
-    "description": "Enumeración de strings (cada variante evalúa a un PenguString con su propio nombre)"
+    "description": "Omen cuyas variantes evalúan a su propio nombre (sin payloads)"
   },
-  "Enum with payload (omen)": {
+  "Omen algebraico (tipo suma)": {
     "prefix": "omenpayload",
     "body": [
-      "omen ${1:Name}:",
-      "\t${2:Empty}",
-      "\t${3:Loading} with ${4:progress} as ${5:int}",
-      "\t${6:Success} with ${7:data} as ${8:string}"
+      "omen ${1:NetworkEvent}:",
+      "    ${2:Disconnected}",
+      "    ${3:Connecting} with attempt as int",
+      "    ${4:Connected} with session_id as string, latency_ms as float"
     ],
-    "description": "Definición de tipo suma algebraico con datos por variante"
+    "description": "Tipo suma con cargas útiles por variante"
   },
-  "Concept (trait/interface)": {
+  "Concept (contrato)": {
     "prefix": "concept",
     "body": [
-      "concept ${1:Name}:",
-      "\tweave ${2:method} with ${3:param} as ${4:type} into ${5:void}"
+      "concept ${1:Formatter}:",
+      "    weave ${2:format} with ${3:value} as string into string"
     ],
-    "description": "Definición de interfaz / trait (concept)"
+    "description": "Contrato de compile-time (los miembros no llevan cuerpo ni `:`)"
   },
-  "Generic Concept (concept shard)": {
+  "Concept genérico (concept shard)": {
     "prefix": "conceptshard",
     "body": [
-      "concept ${1:Name} shard ${2:T}:",
-      "\tweave ${3:method} with ${4:item} as ${2:T} into ${5:void}"
+      "concept ${1:Container} shard ${2:T}:",
+      "    weave ${3:push} with ${4:item} as ${2:T} into void",
+      "    weave ${5:len} into int"
     ],
-    "description": "Contrato de compile-time genérico parametrizado con shard"
+    "description": "Contrato genérico parametrizado con `shard`"
   },
-  "Concept with Bounds (where)": {
+  "Concept con bounds (where)": {
     "prefix": "conceptwhere",
     "body": [
-      "concept ${1:Name} shard ${2:T} where ${2:T}: ${3:OtherConcept}:",
-      "\tweave ${4:method} with ${5:item} as ${2:T} into ${6:void}"
+      "concept ${1:Comparable} shard ${2:T} where ${2:T}: ${3:Par}:",
+      "    weave ${4:compare} with ${5:other} as ${2:T} into int"
     ],
-    "description": "Concept genérico con restricción de bound sobre el parámetro"
+    "description": "Concept genérico restringido por otro concept"
   },
-  "Bind (implement concept)": {
+  "Bind (implementar concept)": {
     "prefix": "bind",
     "body": [
-      "bind ${1:Type} with ${2:Concept}:",
-      "\tweave ${3:method} with ${4:param} as ${5:type} into ${6:void}:",
-      "\t\t$0"
+      "bind ${1:Config} with ${2:Formatter}:",
+      "    weave ${3:format} with ${4:value} as string into string:",
+      "        return \"[{$0}]\""
     ],
     "description": "Implementación de un concept para un tipo"
   },
-  "Enchanting (methods)": {
+  "Enchanting (métodos)": {
     "prefix": "enchanting",
     "body": [
-      "enchanting ${1:Type}:",
-      "\tweave ${2:method} with ${3:param} as ${4:type} into ${5:void}:",
-      "\t\tset self->${6:field} is ${7:value}",
-      "\t\t$0"
+      "enchanting ${1:Tipo}:",
+      "    weave ${2:display} into string:",
+      "        return \"{self->${3:campo}}\"",
+      "",
+      "    weave ritual ${4:new} with ${5:nombre} as string into ${6:Tipo}:",
+      "        return with ${7:campo} is ${5:nombre}"
     ],
-    "description": "Bloque enchanting para añadir métodos a una rune / tipo"
+    "description": "Bloque `enchanting` con un método de instancia y un `ritual`"
   },
-  "Generic Container Enchanting": {
+  "Enchanting genérico de contenedor": {
     "prefix": "enchantingshard",
     "body": [
-      "enchanting ${1|map of shard K to shard V,list of shard T,slice of shard T,maybe shard T,result of shard T to shard E|}:",
-      "\tweave ${2:method} with ${3:param} as ${4:type} into ${5:void}:",
-      "\t\t$0"
+      "enchanting ${1|list of shard T,slice of shard T,map of shard K to shard V,maybe shard T,result of shard T to shard E|}:",
+      "    weave ${2:metodo} with ${3:param} as int into ${4:void}:",
+      "        $0"
     ],
-    "description": "Encantamiento genérico sobre contenedores estándar (monomorfizado bajo demanda)"
+    "description": "`enchanting` genérico sobre un contenedor estándar (monomorfizado)"
   },
-  "Type alias": {
+  "Enchanting de primitivos (shard T where)": {
+    "prefix": "enchantingprim",
+    "body": [
+      "enchanting shard ${1:T} where ${1:T}: ${2:Integrum}:",
+      "    weave ${3:is_even} into bool:",
+      "        return (self % (2 to ${1:T})) == donum ${1:T}"
+    ],
+    "description": "`enchanting` genérico de primitivos; aquí `self` es un valor"
+  },
+  "Enchanting concreto (anula el genérico)": {
+    "prefix": "enchantingconcrete",
+    "body": [
+      "enchanting ${1:float}:",
+      "    weave ${2:sqrt} into ${1:float}:",
+      "        return ${3:0.0}"
+    ],
+    "description": "Bloque concreto que tiene prioridad sobre el genérico"
+  },
+  "Alias de tipo": {
     "prefix": "alias",
     "body": [
-      "alias ${1:Name} as ${2:Type}"
+      "alias ${1:Inches} as ${2:int}"
     ],
-    "description": "Alias transparente de tipo"
+    "description": "Alias estructural transparente"
   },
-  "Newtype seal": {
+  "Seal (newtype nominal)": {
     "prefix": "seal",
     "body": [
       "seal ${1:UserId} as ${2:int}"
     ],
-    "description": "Nuevo tipo fuerte (requiere conversiones explícitas con 'to')"
+    "description": "Newtype fuerte: exige conversiones explícitas con `to`"
   },
-  "Opaque handle": {
+  "Handle opaco": {
     "prefix": "opaque",
     "body": [
-      "alias ${1:Handle} as opaque"
+      "alias ${1:Buffer} as opaque"
     ],
-    "description": "Handle C opaco usado a través de 'ref to'"
+    "description": "Handle C incompleto, usado siempre tras `ref to`"
   },
-  "Immutable local (let)": {
+  "Alias de puntero a función": {
+    "prefix": "fnalias",
+    "body": [
+      "alias ${1:Handler} as weave with ${2:x} as int into ${3:void}"
+    ],
+    "description": "Alias de tipo función (`FnType`)"
+  },
+  "Binding inmutable tipado (let)": {
     "prefix": "let",
     "body": [
-      "let ${1:name} as ${2:type} is ${3:value}"
+      "let ${1:name} as ${2:string} is ${3:valor}"
     ],
-    "description": "Variable local inmutable tipada"
+    "description": "Binding local inmutable con tipo explícito"
   },
-  "Immutable local inferred (let)": {
+  "Binding inmutable inferido (let)": {
     "prefix": "letin",
     "body": [
-      "let ${1:name} is ${2:value}"
+      "let ${1:name} is ${2:valor}"
     ],
-    "description": "Variable local inmutable con tipo inferido"
+    "description": "Binding local inmutable con tipo inferido"
   },
-  "Mutable local (var)": {
+  "Variable mutable tipada (var)": {
     "prefix": "var",
     "body": [
-      "var ${1:name} as ${2:type} is ${3:value}"
+      "var ${1:name} as ${2:int} is ${3:0}"
     ],
-    "description": "Variable local mutable tipada"
+    "description": "Variable local mutable con tipo explícito"
   },
-  "Mutable local inferred (var)": {
+  "Variable mutable inferida (var)": {
     "prefix": "varin",
     "body": [
-      "var ${1:name} is ${2:value}"
+      "var ${1:name} is ${2:valor}"
     ],
     "description": "Variable local mutable con tipo inferido"
   },
-  "Borrowed mutable local (var borrowed)": {
-    "prefix": "varb",
+  "Binding maybe (some)": {
+    "prefix": "letmaybe",
     "body": [
-      "var borrowed ${1:name} as ${2:type} is ${3:value}"
+      "var ${1:cfg} as maybe ${2:Config} is some ${3:valor}"
     ],
-    "description": "Variable local prestada no propietaria (deshabilita auto-banish)"
+    "description": "Binding de un `maybe T` presente (el tipo lo infiere el valor)"
   },
-  "Borrowed immutable local (let borrowed)": {
-    "prefix": "letb",
-    "body": [
-      "let borrowed ${1:name} as ${2:type} is ${3:value}"
-    ],
-    "description": "Variable inmutable prestada no propietaria"
-  },
-  "Destructuring binding (let)": {
+  "Desestructuración (let)": {
     "prefix": "destructlet",
     "body": [
-      "let (${1:x}, ${2:y}) is ${3:record_or_container}"
+      "let (${1:x}, ${2:y}) is ${3:point_value}"
     ],
-    "description": "Desestructuración inmutable de rune, array, list o slice"
+    "description": "Desestructuración de rune, array, slice o list"
   },
-  "Destructuring binding typed (var)": {
+  "Desestructuración tipada (var)": {
     "prefix": "destructvar",
     "body": [
-      "var (${1:id}, ${2:label}) as (${3:int}, ${4:string}) is ${5:record_or_container}"
+      "var (${1:id}, ${2:label}) as (${3:int}, ${4:string}) is ${5:user_record}"
     ],
-    "description": "Desestructuración mutable con tipos explícitos por elemento"
+    "description": "Desestructuración mutable con tipo por elemento"
   },
-  "Constant (const)": {
+  "Desestructuración de tupla": {
+    "prefix": "destructtuple",
+    "body": [
+      "let (${1:cociente}, ${2:ok}) is calling ${3:divide} with ${4:10}, ${5:2}"
+    ],
+    "description": "Desestructuración de un retorno múltiple (tupla)"
+  },
+  "Constante de módulo (const)": {
     "prefix": "const",
     "body": [
-      "const ${1:NAME} as ${2:type} is ${3:value}"
+      "const ${1:MAX_DEPTH} as ${2:int} is ${3:64}"
     ],
-    "description": "Constante de nivel superior evaluada en tiempo de compilación"
+    "description": "Constante top-level plegada en compile-time (nunca `let`/`var`)"
   },
-  "Static variable (static var)": {
+  "Variable estática de función (static var)": {
     "prefix": "static",
     "body": [
-      "static var ${1:name} as ${2:type} is ${3:value}"
+      "static var ${1:counter} as ${2:int} is ${3:0}"
     ],
-    "description": "Variable estática de función (conserva estado entre llamadas)"
+    "description": "Estado persistente entre llamadas (patrón de módulo con estado)"
   },
-  "Default value (donum)": {
+  "Constructor some": {
+    "prefix": "some",
+    "body": [
+      "some ${1:valor}"
+    ],
+    "description": "Constructor de `maybe T` con valor presente"
+  },
+  "Ausencia (maybe none)": {
+    "prefix": "maybenone",
+    "body": [
+      "maybe none"
+    ],
+    "description": "Constructor de `maybe T` vacío"
+  },
+  "Valor por defecto (donum)": {
     "prefix": "donum",
     "body": [
-      "donum ${1:Type}"
+      "donum ${1:T}"
     ],
-    "description": "Valor cero/por defecto en tiempo de compilación (compound literal (T){0})"
+    "description": "Valor cero/por defecto de un tipo (compound literal de C)"
   },
-  "Assignment (set)": {
+  "Asignación (set)": {
     "prefix": "set",
     "body": [
-      "set ${1:target} is ${2:value}"
+      "set ${1:target} is ${2:valor}"
     ],
-    "description": "Reasignación de variable o campo mutable"
+    "description": "Reasignación de un objetivo mutable"
   },
-  "Field assignment in builder (set .)": {
+  "Asignación de campo en builder (set .)": {
     "prefix": "setdot",
     "body": [
-      "set .${1:field} is ${2:value}"
+      "set .${1:campo} is ${2:valor}"
     ],
-    "description": "Asignación de campo en bloque constructor with:"
+    "description": "Asignación de campo dentro de un bloque `with:`"
   },
-  "Compound assignment (set +=)": {
+  "Asignación por puntero (set self->)": {
+    "prefix": "setarrow",
+    "body": [
+      "set self->${1:campo} is ${2:valor}"
+    ],
+    "description": "Mutación de un campo de `self` dentro de un método"
+  },
+  "Asignación por índice (set at)": {
+    "prefix": "setat",
+    "body": [
+      "set ${1:items} at (${2:i} + 1) is ${3:valor}"
+    ],
+    "description": "Asignación a un contenedor indexado (los paréntesis del índice importan)"
+  },
+  "Asignación desreferenciada (set essence of)": {
+    "prefix": "setessence",
+    "body": [
+      "set essence of ${1:ptr} is ${2:valor}"
+    ],
+    "description": "Escritura a través de un puntero (`*ptr = valor`)"
+  },
+  "Asignación compuesta (+=)": {
     "prefix": "setadd",
     "body": [
-      "set ${1:target} += ${2:value}"
+      "set ${1:counter} += ${2:1}"
     ],
-    "description": "Asignación compuesta suma numérica (+)"
+    "description": "Asignación compuesta numérica (+=); nunca con strings"
   },
-  "Compound assignment subtract (set -=)": {
+  "Asignación compuesta (-=)": {
     "prefix": "setsub",
     "body": [
-      "set ${1:target} -= ${2:value}"
+      "set ${1:total} -= ${2:fee}"
     ],
-    "description": "Asignación compuesta resta (-)"
+    "description": "Asignación compuesta numérica (-=)"
   },
-  "Compound assignment multiply (set *=)": {
+  "Asignación compuesta (*=)": {
     "prefix": "setmul",
     "body": [
-      "set ${1:target} *= ${2:value}"
+      "set ${1:acc} *= ${2:factor}"
     ],
-    "description": "Asignación compuesta multiplicación (*)"
+    "description": "Asignación compuesta numérica (*=)"
   },
-  "Compound assignment divide (set /=)": {
+  "Asignación compuesta (/=)": {
     "prefix": "setdiv",
     "body": [
-      "set ${1:target} /= ${2:value}"
+      "set ${1:acc} /= ${2:n}"
     ],
-    "description": "Asignación compuesta división (/)"
+    "description": "Asignación compuesta numérica (/=)"
   },
-  "If statement": {
+  "Asignación compuesta (%=)": {
+    "prefix": "setmod",
+    "body": [
+      "set ${1:acc} %= ${2:n}"
+    ],
+    "description": "Asignación compuesta de módulo (%=), solo enteros"
+  },
+  "Asignación compuesta (&=)": {
+    "prefix": "setband",
+    "body": [
+      "set ${1:flags} &= ${2:0x0F}"
+    ],
+    "description": "Asignación compuesta bit a bit (&=)"
+  },
+  "Asignación compuesta (|=)": {
+    "prefix": "setbor",
+    "body": [
+      "set ${1:flags} |= ${2:0x08}"
+    ],
+    "description": "Asignación compuesta bit a bit (|=)"
+  },
+  "Asignación compuesta (^=)": {
+    "prefix": "setbxor",
+    "body": [
+      "set ${1:flags} ^= ${2:0x01}"
+    ],
+    "description": "Asignación compuesta bit a bit (^=)"
+  },
+  "Asignación compuesta (<<=)": {
+    "prefix": "setshl",
+    "body": [
+      "set ${1:mask} <<= ${2:2}"
+    ],
+    "description": "Asignación compuesta de desplazamiento (<<=)"
+  },
+  "Asignación compuesta (>>=)": {
+    "prefix": "setshr",
+    "body": [
+      "set ${1:mask} >>= ${2:2}"
+    ],
+    "description": "Asignación compuesta de desplazamiento (>>=)"
+  },
+  "Condicional if": {
     "prefix": "if",
     "body": [
-      "if ${1:condition}:",
-      "\t$0"
+      "if ${1:cond}:",
+      "    $0"
     ],
-    "description": "Condicional if"
+    "description": "Condicional `if`"
   },
-  "If-Else statement": {
+  "Condicional if / else": {
     "prefix": "ifelse",
     "body": [
-      "if ${1:condition}:",
-      "\t${2:-- then}",
+      "if ${1:cond}:",
+      "    ${2:...}",
       "else:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Condicional if-else"
+    "description": "Condicional `if` / `else`"
   },
-  "If maybe binding": {
+  "If con binding de maybe": {
     "prefix": "ifmaybe",
     "body": [
-      "if ${1:val} as ${2:Type} is ${3:maybe_expr}:",
-      "\t$0"
+      "if ${1:v} as ${2:Config} is ${3:maybe_val}:",
+      "    $0"
     ],
-    "description": "Desenvolver valor de un maybe mediante if con binding tipado"
+    "description": "Desempaqueta un `maybe T` con binding tipado (forma Pengunic)"
   },
-  "If-Then-Else expression": {
+  "Expresión ternaria (if then else)": {
     "prefix": "ifexpr",
     "body": [
-      "if ${1:condition} then ${2:val_true} else ${3:val_false}"
+      "if ${1:score >= 100} then ${2:\"alto\"} else ${3:\"bajo\"}"
     ],
-    "description": "Expresión ternaria if-then-else"
+    "description": "Expresión `if ... then ... else ...` en una línea"
   },
-  "Unless statement": {
+  "If en posición de valor": {
+    "prefix": "ifvalue",
+    "body": [
+      "let ${1:label} is if ${2:score >= 100}:",
+      "    ${3:\"alto\"}",
+      "else:",
+      "    ${4:\"bajo\"}"
+    ],
+    "description": "Bloque `if` que produce un valor"
+  },
+  "Condicional unless": {
     "prefix": "unless",
     "body": [
-      "unless ${1:condition}:",
-      "\t$0"
+      "unless ${1:cond}:",
+      "    $0"
     ],
-    "description": "Condicional unless (ejecuta si la condición es falsa)"
+    "description": "`unless` equivale a `if not cond`"
   },
-  "Unless-Else statement": {
+  "Condicional unless / else": {
     "prefix": "unlesselse",
     "body": [
-      "unless ${1:condition}:",
-      "\t${2:-- unless}",
+      "unless ${1:cond}:",
+      "    ${2:...}",
       "else:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Condicional unless-else"
+    "description": "`unless` con rama `else`"
   },
-  "While loop": {
+  "Bucle while": {
     "prefix": "while",
     "body": [
-      "while ${1:condition}:",
-      "\t$0"
+      "while ${1:cond}:",
+      "    $0"
     ],
-    "description": "Bucle while"
+    "description": "Bucle `while`"
   },
-  "For-In collection loop": {
+  "Bucle for (in)": {
+    "prefix": "for",
+    "body": [
+      "for ${1:item} in ${2:coleccion}:",
+      "    $0"
+    ],
+    "description": "Iteración sobre array, list, slice, string, map o rango"
+  },
+  "Bucle for-in": {
     "prefix": "forin",
     "body": [
-      "for ${1:item} in ${2:collection}:",
-      "\t$0"
+      "for ${1:item} in ${2:coleccion}:",
+      "    $0"
     ],
-    "description": "Bucle for iterando sobre array, list, slice, string o map"
+    "description": "Iteración sobre una colección"
   },
-  "For-From range loop": {
+  "Bucle for indexado": {
+    "prefix": "foridx",
+    "body": [
+      "for ${1:i}, ${2:item} in ${3:coleccion}:",
+      "    $0"
+    ],
+    "description": "Iteración con índice (o `_` para descartarlo)"
+  },
+  "Bucle for-from (rango por índices)": {
     "prefix": "forfrom",
     "body": [
       "for ${1:i} from ${2:0} to ${3:10}:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Bucle for con rango numérico [start, end)"
+    "description": "Rango numérico semiabierto `[0, 10)`"
   },
-  "For-From-Step range loop": {
+  "Bucle for con step": {
     "prefix": "forstep",
     "body": [
-      "for ${1:i} from ${2:0} to ${3:10} step ${4:1}:",
-      "\t$0"
+      "for ${1:i} from ${2:10} to ${3:0} step ${4:-1}:",
+      "    $0"
     ],
-    "description": "Bucle for con rango numérico y paso configurable"
+    "description": "Rango numérico con paso (admite `step` negativo)"
   },
-  "For indexed loop": {
-    "prefix": "foridx",
+  "Bucle for sobre un rango": {
+    "prefix": "forrange",
     "body": [
-      "for ${1:i}, ${2:item} in ${3:collection}:",
-      "\t$0"
+      "for ${1:i} in ${2:1} to ${3:5}:",
+      "    $0"
     ],
-    "description": "Bucle for con índice y elemento"
+    "description": "Iteración sobre un rango `a to b`"
   },
-  "For comprehension": {
+  "Comprensión de lista": {
     "prefix": "forcomp",
     "body": [
-      "for ${1:x} in ${2:collection} then ${3:x}"
+      "for ${1:x} in ${2:nums} then ${3:x * x}"
     ],
-    "description": "Comprensión de lista 'for ... then ...'"
+    "description": "List comprehension `for ... then ...`"
   },
-  "Filtered list comprehension": {
+  "Comprensión con filtro": {
     "prefix": "forcompwhen",
     "body": [
-      "for ${1:x} in ${2:collection} when ${3:condition} then ${4:expr}"
+      "for ${1:x} in ${2:nums} when ${3:x % 2 == 0} then ${4:x}"
     ],
-    "description": "Comprensión de lista con filtro condicional 'for ... when ... then ...'"
+    "description": "List comprehension filtrada `for ... when ... then ...`"
   },
   "Pattern matching (judge)": {
     "prefix": "judge",
     "body": [
-      "judge ${1:expr}:",
-      "\twhen ${2:Pattern} -> ${3:result}",
-      "\telse -> ${4:fallback}"
+      "judge ${1:estado}:",
+      "    when ${2:Phase.Idle} -> ${3:\"idle\"}",
+      "    when ${4:Phase.Fighting} -> ${5:\"fighting\"}",
+      "    else -> ${6:\"?\"}"
     ],
-    "description": "Pattern matching exhaustivo con judge"
+    "description": "Coincidencia de patrones exhaustiva"
   },
-  "Judge branch (when)": {
+  "Rama de judge (when ->)": {
     "prefix": "when",
     "body": [
-      "when ${1:Pattern} -> ${0:result}"
+      "when ${1:Phase.Idle} -> ${2:\"idle\"}"
     ],
-    "description": "Rama de evaluación inside judge"
+    "description": "Rama de un `judge` (también sirve para literales)"
   },
-  "Do block expression": {
+  "Rama de judge con payload": {
+    "prefix": "whenpayload",
+    "body": [
+      "when ${1:Status.Ok} with ${2:value} -> ${3:value + 1}"
+    ],
+    "description": "Extrae la carga útil de una variante de `omen`"
+  },
+  "Rama de judge con guarda": {
+    "prefix": "whenguard",
+    "body": [
+      "when ${1:Number.Val} with ${2:n} if ${3:n > 0} -> ${4:\"positivo\"}"
+    ],
+    "description": "Patrón con guarda `if <cond>`"
+  },
+  "Bloque de valor (do:)": {
     "prefix": "do",
     "body": [
       "do:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Bloque de expresión do: que evalúa a su última declaración"
+    "description": "Bloque de valor: evalúa a su última expresión"
   },
-  "Builder construction (with:)": {
+  "Bloque unsafe": {
+    "prefix": "unsafe",
+    "body": [
+      "unsafe:",
+      "    $0"
+    ],
+    "description": "Opt-out de comprobaciones de límites (emite el warning W0007)"
+  },
+  "Builder with: (valor nuevo)": {
     "prefix": "withblock",
     "body": [
-      "var ${1:obj} as ${2:Type} with:",
-      "\tset .${3:field} is ${4:value}",
-      "\t$0"
+      "var ${1:p} as ${2:Point} with:",
+      "    set .${3:x} is ${4:10}",
+      "    set .${5:y} is ${6:20}",
+      "    $0"
     ],
-    "description": "Construcción estructurada de un tipo con bloque with:"
+    "description": "Construcción de un `rune` con bloque `with:`"
   },
-  "Edit existing with: block": {
+  "Builder with target (mutación)": {
     "prefix": "withtarget",
     "body": [
-      "with ${1:target}:",
-      "\tset .${2:field} is ${3:value}",
-      "\t$0"
+      "with ${1:scores}:",
+      "    calling .${2:push} with ${3:10}",
+      "    $0"
     ],
-    "description": "Modificación en bloque de una estructura existente"
+    "description": "Mutación in-place de un valor o colección existente"
   },
-  "Collection with block": {
+  "Builder with sobre colección": {
     "prefix": "withcol",
     "body": [
-      "with ${1:collection}:",
-      "\tcalling .${2|push,append,clear,put,remove|} with ${3:arg}",
-      "\t$0"
+      "with ${1:coleccion}:",
+      "    calling .${2|push,put,remove,clear|} with ${3:item}",
+      "    $0"
     ],
-    "description": "Bloque with para mutación in-place de listas y mapas con métodos abreviados"
+    "description": "Bloque `with` con métodos abreviados de contenedor"
   },
-  "Nested with builder": {
+  "Builder with anidado": {
     "prefix": "withnested",
     "body": [
-      "set .${1:field} is with:",
-      "\tset .${2:subfield} is ${3:value}",
-      "\t$0"
+      "set .${1:address} is with:",
+      "    set .${2:street} is ${3:\"123 Main St\"}",
+      "    set .${4:city} is ${5:\"Madrid\"}",
+      "    $0"
     ],
-    "description": "Constructor with: anidado dentro de otro builder (infiere el tipo de destino)"
+    "description": "Constructor `with:` anidado (infiere el tipo destino)"
   },
-  "Inline struct literal (with)": {
+  "Literal de struct en una línea": {
     "prefix": "withlit",
     "body": [
-      "with ${1:field} is ${2:value}, ${3:field2} is ${4:value2}"
+      "with ${1:name} is ${2:\"Ada\"}, ${3:hp} is ${4:100}"
     ],
-    "description": "Literal estructurado de una línea"
+    "description": "Literal de struct con campos explícitos"
   },
-  "Function call (calling with)": {
+  "Literal de struct corto": {
+    "prefix": "withshort",
+    "body": [
+      "with ${1:name}, ${2:hp}"
+    ],
+    "description": "Forma corta: el campo toma el binding del mismo nombre (no convierte tipos)"
+  },
+  "Literal de mapa por indentación": {
+    "prefix": "mapindent",
+    "body": [
+      "var ${1:lookup} as map of string to int is:",
+      "    \"${2:one}\": 1",
+      "    \"${3:two}\": 2"
+    ],
+    "description": "Literal de mapa con sintaxis de bloque indentado"
+  },
+  "Literal de struct por indentación": {
+    "prefix": "structindent",
+    "body": [
+      "var ${1:player} as ${2:Player} is:",
+      "    name is ${3:\"Ada\"}",
+      "    hp is ${4:100}"
+    ],
+    "description": "Literal de struct con sintaxis de bloque indentado"
+  },
+  "Literal de array por indentación": {
+    "prefix": "arrayindent",
+    "body": [
+      "var ${1:grid} as array of array of int with size ${2:2} with size ${3:3} is:",
+      "    ${4:1}, ${5:2}, ${6:3}",
+      "    ${7:4}, ${8:5}, ${9:6}"
+    ],
+    "description": "Array multidimensional con sintaxis de bloque indentado"
+  },
+  "Llamada con argumentos (calling with)": {
     "prefix": "calling",
     "body": [
-      "calling ${1:func} with ${0:args}"
+      "calling ${1:funcion} with ${2:args}"
     ],
     "description": "Llamada a función o método con argumentos"
   },
-  "Function call without args": {
+  "Llamada sin argumentos (calling)": {
     "prefix": "call",
     "body": [
-      "calling ${1:func}"
+      "calling ${1:funcion}"
     ],
-    "description": "Llamada a función o método sin argumentos"
+    "description": "Llamada sin argumentos (`calling` es obligatorio)"
   },
-  "Import module": {
-    "prefix": "import",
+  "Llamada con argumento de tipo (of)": {
+    "prefix": "callingof",
     "body": [
-      "import ${1:std.spark}"
+      "calling ${1:memoria.alloc_array} of ${2:int} with ${3:n}"
     ],
-    "description": "Importación de módulo"
+    "description": "Argumento de tipo explícito cuando la inferencia no puede verlo"
   },
-  "Import module with alias": {
-    "prefix": "importas",
+  "Llamada con argumentos con nombre": {
+    "prefix": "callingnamed",
     "body": [
-      "import ${1:module} as ${2:alias}"
+      "calling ${1:greet} with ${2:name} is ${3:\"Ada\"}, ${4:times} is ${5:2}"
     ],
-    "description": "Importación de módulo con alias"
+    "description": "Argumentos con nombre (`name is valor`)"
   },
-  "Include C header": {
-    "prefix": "include",
+  "Cadena de métodos multilínea": {
+    "prefix": "chain",
     "body": [
-      "include \"${1:header.h}\""
+      "calling ${1:raw}",
+      "    .${2:trim}",
+      "    .${3:lower}",
+      "    .${4:replace} with ${5:\" \", \"-\"}"
     ],
-    "description": "Inclusión de cabecera C (#include)"
+    "description": "Cadena de métodos: un eslabón por línea; el `with` es del último"
   },
-  "Link C library": {
-    "prefix": "link",
-    "body": [
-      "link \"${1:lib}\""
-    ],
-    "description": "Directiva de enlazado de librería C (-l)"
-  },
-  "Insignia C prefix": {
-    "prefix": "insignia",
-    "body": [
-      "insignia ${1:prefix_}"
-    ],
-    "description": "Prefijo C para todos los símbolos generados en el módulo"
-  },
-  "Banish memory": {
+  "Liberar memoria (banish)": {
     "prefix": "banish",
     "body": [
       "banish ${1:ptr}"
     ],
-    "description": "Liberación explícita de memoria en el heap"
+    "description": "Liberación explícita de memoria del heap (nunca sobre vistas)"
   },
   "Defer statement": {
     "prefix": "defer",
     "body": [
-      "defer ${1:statement}"
+      "defer ${1:sentencia}"
     ],
     "description": "Ejecución diferida al salir del ámbito (LIFO)"
   },
@@ -599,192 +856,438 @@
     "body": [
       "defer banish ${1:ptr}"
     ],
-    "description": "Liberar recurso en heap automáticamente al salir del ámbito"
+    "description": "Libera al salir del ámbito (el idioma canónico de limpieza)"
+  },
+  "Defer de cleanup de C": {
+    "prefix": "defercall",
+    "body": [
+      "defer calling ${1:Tipo.release} with ${2:recurso}"
+    ],
+    "description": "Recursos de C se liberan con SU cleanup, no con `banish`"
   },
   "Errdefer statement": {
     "prefix": "errdefer",
     "body": [
-      "errdefer ${1:statement}"
+      "errdefer ${1:sentencia}"
     ],
-    "description": "Ejecución diferida únicamente en rutas de retorno de error"
+    "description": "Limpieza solo en la ruta de retorno de error"
   },
   "Errdefer banish": {
     "prefix": "errdeferbanish",
     "body": [
       "errdefer banish ${1:ptr}"
     ],
-    "description": "Liberar recurso únicamente si la función falla y retorna error"
+    "description": "Libera solo si la función termina devolviendo error"
   },
-  "Try unwrapping and propagate": {
+  "Propagación de errores (try)": {
     "prefix": "try",
     "body": [
-      "try calling ${1:func} with ${2:args}"
+      "try calling ${1:funcion} with ${2:args}"
     ],
-    "description": "Desempaquetar maybe/result o propagar error al llamador"
+    "description": "Desempaqueta o propaga el fallo; exige retorno `maybe`/`result`"
   },
-  "Or else fallback": {
+  "Fallback (or else)": {
     "prefix": "orelse",
     "body": [
-      "${1:maybe_expr} or else ${2:fallback_value}"
+      "${1:maybe_val} or else ${2:fallback}"
     ],
-    "description": "Valor o alternativa si el maybe es none / error"
+    "description": "Valor o alternativa perezosa si falta o falla"
   },
-  "Or return error": {
+  "Retorno temprano (or return)": {
     "prefix": "orreturn",
     "body": [
-      "${1:expr} or return ${2:error_code}"
+      "${1:expr} or return ${2:error_val}"
     ],
-    "description": "Retornar de inmediato de la función en caso de ausencia/fallo"
+    "description": "Devuelve de inmediato y ejecuta `defer`/`errdefer`"
   },
-  "Or failure block": {
+  "Bloque de fallo (or:)": {
     "prefix": "orblock",
     "body": [
-      "${1:calling risky with arg} or:",
-      "\tlet err is error",
-      "\t$0"
+      "${1:calling parse_config with raw} or:",
+      "    calling spark.eprintln with \"fallo: {error}\"",
+      "    $0"
     ],
-    "description": "Manejo de fallo en bloque donde el fallo se asocia a 'error'"
+    "description": "Manejo rico del fallo; `error` solo existe dentro del bloque"
   },
-  "Address-of (sigil of)": {
+  "Dirección (sigil of)": {
     "prefix": "sigil",
     "body": [
       "sigil of ${1:variable}"
     ],
-    "description": "Obtener puntero / referencia a variable (&x)"
+    "description": "Toma la dirección de un lvalue (`&x`)"
   },
-  "Dereference (essence of)": {
+  "Desreferencia (essence of)": {
     "prefix": "essence",
     "body": [
       "essence of ${1:ptr}"
     ],
-    "description": "Desreferenciar puntero (*ptr)"
+    "description": "Desreferencia un puntero (`*ptr`)"
   },
-  "Borrow bytes view (bytes of)": {
+  "Vista de bytes (bytes of)": {
     "prefix": "bytesof",
     "body": [
-      "bytes of ${1:string_or_byte_array}"
+      "bytes of ${1:str}"
     ],
-    "description": "Préstamo de puntero de bytes (ref to frozen byte para string, ref to byte para array)"
+    "description": "Préstamo de bytes: `ref to frozen byte` para string, `ref to byte` para arrays"
   },
-  "Transmute unsafe cast": {
+  "Conversión insegura (transmute)": {
     "prefix": "transmute",
     "body": [
-      "transmute ${1:value} to ${2:Type}"
+      "transmute ${1:valor} to ${2:ref to void}"
     ],
-    "description": "Reinterpretación binaria insegura a otro tipo"
+    "description": "Reinterpretación a nivel de bits; siempre emite el warning W0001"
   },
-  "Size of type": {
+  "Tamaño de un tipo (size of)": {
     "prefix": "sizeof",
     "body": [
-      "size of ${1:Type}"
+      "size of ${1:Tipo}"
     ],
-    "description": "Tamaño en bytes de un tipo (sizeof)"
+    "description": "Tamaño en bytes en compile-time (devuelve `usize`)"
   },
-  "Unit test block": {
+  "Byte de un carácter (ord)": {
+    "prefix": "ord",
+    "body": [
+      "ord ${1:\"A\"}"
+    ],
+    "description": "Valor del byte de una cadena de un carácter"
+  },
+  "Carácter desde un byte (chr)": {
+    "prefix": "chr",
+    "body": [
+      "chr ${1:65}"
+    ],
+    "description": "Cadena de un carácter a partir de un código 0–255"
+  },
+  "Reserva genérica (memoria.alloc)": {
+    "prefix": "memalloc",
+    "body": [
+      "calling memoria.alloc of ${1:T}"
+    ],
+    "description": "Reserva un valor del heap con `std.memoria` (zeroed por defecto)"
+  },
+  "Reserva de array (memoria.alloc_array)": {
+    "prefix": "memallocarray",
+    "body": [
+      "var ${1:buf} as ref to ${2:int} is calling memoria.alloc_array of ${2:int} with ${3:n}",
+      "defer banish ${1:buf}"
+    ],
+    "description": "Array del heap con liberación diferida"
+  },
+  "Rellenar memoria (memoria.fill)": {
+    "prefix": "memfill",
+    "body": [
+      "calling memoria.fill of ${1:int} with ${2:buf}, ${3:7}, ${4:n}"
+    ],
+    "description": "Relleno tipado de un búfer reservado con `std.memoria`"
+  },
+  "Bloque de test": {
     "prefix": "test",
     "body": [
-      "test \"${1:test_name}\":",
-      "\t$0"
+      "test \"${1:descripcion del caso}\":",
+      "    $0"
     ],
-    "description": "Bloque de prueba unitaria nativo ejecutado por 'pengu test'"
+    "description": "Bloque de prueba unitaria nativo (`pengu test`)"
   },
-  "Compile-time conditional (when)": {
+  "Aserción de test (ward)": {
+    "prefix": "testassert",
+    "body": [
+      "calling ward.assert_eq_int with ${1:actual}, ${2:esperado}"
+    ],
+    "description": "Aserción de `std.ward` dentro de un bloque `test`"
+  },
+  "Compilación condicional (when)": {
     "prefix": "whencc",
     "body": [
-      "when ${1:condition}:",
-      "\t$0"
+      "when ${1:os == \"linux\"}:",
+      "    $0"
     ],
-    "description": "Compilación condicional en tiempo de compilación"
+    "description": "`when` de compile-time (declaraciones o sentencias)"
   },
-  "Debug conditional (when debug)": {
-    "prefix": "whendebug",
-    "body": [
-      "when debug:",
-      "\t$0"
-    ],
-    "description": "Bloque compilado únicamente en perfil debug"
-  },
-  "OS conditional (when os)": {
-    "prefix": "whenos",
-    "body": [
-      "when os == \"${1:windows}\":",
-      "\t$0"
-    ],
-    "description": "Compilación condicional por sistema operativo"
-  },
-  "Chained compile-time conditional (when / else when)": {
+  "Cadena when / else when / else": {
     "prefix": "whenchain",
     "body": [
       "when ${1:os == \"windows\"}:",
-      "\t$2",
+      "    ${2:...}",
       "else when ${3:os == \"linux\"}:",
-      "\t$4",
+      "    ${4:...}",
       "else:",
-      "\t$0"
+      "    $0"
     ],
-    "description": "Cadena de compilación condicional con 'else when' y 'else:'"
+    "description": "Cadena de compilación condicional con rama de reserva"
   },
-  "Print builtin": {
+  "When de expresión (ternario)": {
+    "prefix": "whenexpr",
+    "body": [
+      "when ${1:arch == \"x64\"} then ${2:8192} else ${3:4096}"
+    ],
+    "description": "Ternario evaluado en compile-time"
+  },
+  "When debug": {
+    "prefix": "whendebug",
+    "body": [
+      "when debug:",
+      "    $0"
+    ],
+    "description": "Bloque compilado solo con el perfil `debug`"
+  },
+  "When defined(...)": {
+    "prefix": "whendefined",
+    "body": [
+      "when defined(${1:FEATURE}):",
+      "    $0"
+    ],
+    "description": "Compilación condicional según un `-D NAME`"
+  },
+  "Atributo @noreturn": {
+    "prefix": "attrnoreturn",
+    "body": [
+      "@noreturn",
+      "weave ${1:fail_hard} with ${2:msg} as string into void:",
+      "    calling spark.eprintln with ${2:msg}",
+      "    calling spark.exit with 1"
+    ],
+    "description": "Weave `into void` que nunca retorna (exige garantía real)"
+  },
+  "Atributo @export": {
+    "prefix": "attrexport",
+    "body": [
+      "@export(\"pengu_${1:myapp}_${2:add}\")",
+      "weave ${3:add} with a as int, b as int into int:",
+      "    return a + b"
+    ],
+    "description": "Fija el símbolo C emitido; usa prefijo `pengu_<módulo>_`"
+  },
+  "Atributo @deprecated": {
+    "prefix": "attrdeprecated",
+    "body": [
+      "@deprecated(\"usa ${1:el_reemplazo} en su lugar\")"
+    ],
+    "description": "Marca un símbolo como obsoleto con motivo y reemplazo"
+  },
+  "Atributo @inline": {
+    "prefix": "attrinline",
+    "body": [
+      "@inline"
+    ],
+    "description": "Fuerza la inclusión en línea en el C generado"
+  },
+  "Atributo @cold": {
+    "prefix": "attrcold",
+    "body": [
+      "@cold"
+    ],
+    "description": "Marca una ruta fría para el optimizador de C"
+  },
+  "Atributo @packed": {
+    "prefix": "attrpacked",
+    "body": [
+      "@packed"
+    ],
+    "description": "Elimina el relleno del `rune` (solo en fronteras binarias)"
+  },
+  "Atributo @align": {
+    "prefix": "attralign",
+    "body": [
+      "@align(${1:32})"
+    ],
+    "description": "Fija la alineación (potencia de dos entre 1 y 128)"
+  },
+  "Importar módulo": {
+    "prefix": "import",
+    "body": [
+      "import ${1:std.spark}"
+    ],
+    "description": "Importación de módulo"
+  },
+  "Importar con alias": {
+    "prefix": "importas",
+    "body": [
+      "import ${1:std.tally} as ${2:tl}"
+    ],
+    "description": "Importación con alias (solo si colisiona o es muy largo)"
+  },
+  "Incluir cabecera de C": {
+    "prefix": "include",
+    "body": [
+      "include \"${1:header.h}\""
+    ],
+    "description": "Inclusión de cabecera de C (`#include`)"
+  },
+  "Enlazar librería de C": {
+    "prefix": "link",
+    "body": [
+      "link \"${1:lib}\""
+    ],
+    "description": "Directiva de enlazado de una librería de C"
+  },
+  "Prefijo C del módulo (insignia)": {
+    "prefix": "insignia",
+    "body": [
+      "insignia ${1:modulo}_"
+    ],
+    "description": "Prefija los símbolos C del módulo (evita colisiones)"
+  },
+  "Print integrado": {
     "prefix": "print",
     "body": [
-      "calling print with \"${1:message}\\n\""
+      "calling print with \"${1:mensaje}\\n\""
     ],
-    "description": "Imprimir texto por consola mediante builtin print"
+    "description": "Builtin `print` del compilador (se traduce a `printf`)"
   },
   "Println (std.spark)": {
     "prefix": "println",
     "body": [
-      "calling spark.println with \"${1:message}\""
+      "calling spark.println with \"${1:mensaje}\""
     ],
-    "description": "Imprimir línea por consola con std.spark.println"
+    "description": "Imprime con salto de línea mediante `std.spark`"
   },
-  "Print without newline (std.spark)": {
+  "Print sin salto (std.spark)": {
     "prefix": "printspark",
     "body": [
-      "calling spark.print with \"${1:message}\""
+      "calling spark.print with \"${1:mensaje}\""
     ],
-    "description": "Imprimir texto por consola sin salto de línea con std.spark.print"
+    "description": "Imprime sin salto de línea mediante `std.spark`"
   },
-  "Arca asset string": {
+  "Print a stderr (std.spark)": {
+    "prefix": "eprintln",
+    "body": [
+      "calling spark.eprintln with \"${1:mensaje}\""
+    ],
+    "description": "Imprime en stderr mediante `std.spark`"
+  },
+  "Interpolación de cadena": {
+    "prefix": "interp",
+    "body": [
+      "\"${1:texto}: {${2:valor}}\""
+    ],
+    "description": "Interpolación `{expr}`: la única forma de componer strings"
+  },
+  "Asset embebido como string (arca)": {
     "prefix": "arcastr",
     "body": [
-      "calling arca.string with \"${1:asset_path}\""
+      "calling arca.string with \"${1:ui/index.html}\""
     ],
-    "description": "Obtener contenido de asset incrustado como cadena propia (string)"
+    "description": "Copia con posesión del recurso embebido (libérala con `banish`)"
   },
-  "Arca asset pointer": {
+  "Asset embebido como puntero (arca)": {
     "prefix": "arcaptr",
     "body": [
-      "calling arca.ptr with \"${1:asset_path}\""
+      "calling arca.ptr with \"${1:logo.png}\""
     ],
-    "description": "Puntero directo a los bytes de asset en .rodata (ref to frozen void)"
+    "description": "Puntero directo a `.rodata` (vista: nunca `banish`)"
   },
-  "Arca asset bytes slice": {
+  "Asset embebido como slice (arca)": {
     "prefix": "arcabytes",
     "body": [
-      "calling arca.bytes with \"${1:asset_path}\""
+      "calling arca.bytes with \"${1:logo.png}\""
     ],
-    "description": "Vista slice no propietaria sobre los bytes del asset incrustado (slice of byte)"
+    "description": "Vista `slice of byte` sin posesión (nunca `banish`)"
   },
-  "FFI slice from pointer": {
+  "Tamaño de un asset (arca)": {
+    "prefix": "arcasize",
+    "body": [
+      "calling arca.size with \"${1:logo.png}\""
+    ],
+    "description": "Tamaño en bytes del recurso embebido (0 si no existe)"
+  },
+  "FFI: slice desde puntero": {
     "prefix": "ffislice",
     "body": [
-      "calling ffi.slice_from_ptr with ${1:ptr}, ${2:count}"
+      "calling ffi.slice_from_ptr with ${1:ptr}, ${2:n}"
     ],
-    "description": "Crear vista slice sobre puntero C crudo (std.ffi.slice_from_ptr)"
+    "description": "Vista `slice` sobre un búfer de C (no propietaria)"
   },
-  "FFI string from C string": {
+  "FFI: string desde char*": {
     "prefix": "ffistr",
     "body": [
       "calling ffi.string_from_cstr with ${1:c_str}"
     ],
-    "description": "Convertir char* C en PenguString propia (std.ffi.string_from_cstr)"
+    "description": "Convierte un `char*` terminado en NUL en un `string` propio"
   },
-  "FFI C string from string": {
+  "FFI: char* desde string": {
     "prefix": "fficstr",
     "body": [
       "calling ffi.cstr_from_string with ${1:pengu_str}"
     ],
-    "description": "Obtener puntero C ref to char a partir de string (std.ffi.cstr_from_string)"
+    "description": "Obtiene un `ref to char` sin posesión desde un `string`"
+  },
+  "FFI: bytes desde string": {
+    "prefix": "ffibytes",
+    "body": [
+      "calling ffi.bytes_from_string with ${1:pengu_str}"
+    ],
+    "description": "Vista de bytes sobre un `string` de PenguScript"
+  },
+  "Docstring de módulo (##)": {
+    "prefix": "docmod",
+    "body": [
+      "## ${1:modulo.pengu}",
+      "## ${2:Descripción de una línea del módulo.}",
+      "##",
+      "## ${3:Documentación extendida: qué resuelve, qué NO resuelve, invariantes,}",
+      "## ${4:notas de memoria y ejemplos de uso.}",
+      "##",
+      "## ## Ejemplo",
+      "## ```pengu",
+      "## import std.${5:modulo}",
+      "## calling ${5:modulo}.${6:do_thing} with 42",
+      "## ```"
+    ],
+    "description": "Docstring de módulo obligatorio, antes de cualquier directiva"
+  },
+  "Docstring de función (##)": {
+    "prefix": "docfn",
+    "body": [
+      "## ${1:Resumen de una línea.}",
+      "##",
+      "## ## Parámetros",
+      "## - `${2:param}`: ${3:descripción.}",
+      "##",
+      "## ## Retorno",
+      "## ${4:Descripción del valor devuelto y de su liberación.}",
+      "##",
+      "## ## Ejemplo",
+      "## ```pengu",
+      "## ${5:calling funcion with 42}",
+      "## ```"
+    ],
+    "description": "Docstring de función con las secciones canónicas"
+  },
+  "Docstring de tipo (##)": {
+    "prefix": "doctype",
+    "body": [
+      "## ${1:Resumen del tipo.}",
+      "##",
+      "## ## Invariantes",
+      "## - ${2:campo} ${3:>= 0}.",
+      "##",
+      "## ## Memoria",
+      "## ${4:Qué campos poseen memoria y cómo liberarlos con `banish`.}"
+    ],
+    "description": "Docstring de `rune` / `omen` / `seal` con invariantes y memoria"
+  },
+  "Docstring de memoria (##)": {
+    "prefix": "docmem",
+    "body": [
+      "## ## Memoria",
+      "## ${1:El valor devuelto es nuevo; libéralo con `banish`.}"
+    ],
+    "description": "Sección de memoria para documentar la propiedad"
+  },
+  "Docstring de antiquus (##)": {
+    "prefix": "docantiquus",
+    "body": [
+      "## ${1:Resumen de lo que hace el C.}",
+      "##",
+      "## ## Motivo",
+      "## ${2:Motivo medible (benchmark, syscall, primitiva de CPU, ...).}",
+      "##",
+      "## ## Precondiciones",
+      "## - ${3:x} debe ser ${4:un entero de 32 bits}.",
+      "##",
+      "## ## Memoria",
+      "## ${5:No asigna memoria. No hay nada que liberar.}"
+    ],
+    "description": "Docstring obligatorio de un `antiquus` público"
   }
 }

@@ -232,6 +232,11 @@ function M.register_lspconfig()
   for _, f in ipairs(c.filetypes or { "pengus" }) do
     table.insert(fts, f)
   end
+  -- Documentación generada desde los marcadores reales de la configuración.
+  local marker_list = {}
+  for _, m in ipairs(c.root_markers or {}) do
+    table.insert(marker_list, ('"%s"'):format(m))
+  end
   configs.pengus = {
     default_config = {
       name = M.server_name(),
@@ -247,7 +252,7 @@ function M.register_lspconfig()
       description = "Servidor LSP de PenguScript (`pengu lsp --stdio`). "
         .. "Registrado automáticamente por penguscript-nvim.",
       default_config = {
-        root_dir = [[root_pattern("pengu.yaml", "pengu.toml", "Pengu.toml", ".git")]],
+        root_dir = ("root_pattern(%s)"):format(table.concat(marker_list, ", ")),
       },
     },
   }

@@ -28,9 +28,10 @@ local defaults = {
   -- Se buscan de abajo hacia arriba desde el directorio del buffer.
   root_markers = {
     "pengu.yaml",
-    "pengu.yml",
     "pengu.toml",
     "Pengu.toml",
+    "pengu.lock",
+    ".pengufmt.toml",
     ".git",
   },
 
@@ -59,20 +60,28 @@ local defaults = {
   },
 
   commands = {
-    --- Directorio donde se ejecutan `build`/`check`/`run`:
+    --- Directorio donde se ejecutan los comandos:
     --   "project" -> raíz del proyecto del buffer actual
     --   "buffer"  -> directorio del archivo actual
-    --   "cwd"     -> directorio actual de Neovim
+    --   "cwd"     -> directorio actual de Neovim (por defecto)
     cwd = "cwd",
     run = {
       split = "botright", -- "botright" | "topleft" | "vnew" | "new"
       size = 15, -- altura (o ancho si split es vertical)
-      args = nil, -- argumentos extra por defecto, p. ej. { "-v" }
+      args = nil, -- argumentos extra por defecto, p. ej. { "--profile", "release" }
+    },
+    watch = {
+      split = "botright",
+      size = 15,
+      args = nil,
     },
     build = { args = nil }, -- argumentos extra por defecto para build
     check = { args = nil }, -- argumentos extra por defecto para check
     test = { args = nil }, -- argumentos extra por defecto para test
     fmt = { args = nil }, -- argumentos extra por defecto para fmt
+    -- El resto de subcomandos (`doc`, `bind`, `assets`, `benchmark`, `expand`,
+    -- `time`, `doctor`, `clean`, `init`, `add`, `update`, `gc`, `eval`)
+    -- aceptan también `args = { ... }` si añades la entrada aquí.
   },
 
   --- Formatea al guardar (opcional). `false` desactiva; `true` o una tabla

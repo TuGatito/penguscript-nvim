@@ -3,8 +3,8 @@
 --
 -- Uso básico:
 --   require("pengus").setup {
---     bin_path = "C:/herramientas/pengu.exe", -- opcional
---     format_on_save = true,                  -- opcional
+--     bin_path = "/ruta/a/pengu",   -- opcional
+--     format_on_save = true,        -- opcional
 --     lsp = {
 --       on_attach = function(client, bufnr) ... end,
 --     },
@@ -45,29 +45,60 @@ function M.config()
   return require("pengus.config").get()
 end
 
---- API de comandos programáticos (equivalentes Lua de :Pengu*).
--- Aceptan una tabla de argumentos o varargs:
---   require("pengus").build()            -- pengu build
---   require("pengus").run({ "main.pengu" })
-function M.build(...)
-  return require("pengus.commands").build(...)
+--------------------------------------------------------------------------------
+-- API programática (equivalentes Lua de los comandos :Pengu*)
+--
+-- Todas aceptan una tabla de argumentos o varargs:
+--   require("pengus").build()                     -- pengu build
+--   require("pengus").run({ "main.pengu", "-v" }) -- pengu run main.pengu -v
+--------------------------------------------------------------------------------
+
+local function cmd(name)
+  return function(...)
+    return require("pengus.commands")[name](...)
+  end
 end
 
-function M.run(...)
-  return require("pengus.commands").run(...)
-end
-
-function M.check(...)
-  return require("pengus.commands").check(...)
-end
-
-function M.test(...)
-  return require("pengus.commands").test(...)
-end
-
-function M.format(...)
-  return require("pengus.commands").format(...)
-end
+--- Compila el proyecto (`pengu build`).
+M.build = cmd("build")
+--- Comprueba los tipos (`pengu check`).
+M.check = cmd("check")
+--- Ejecuta los tests (`pengu test`).
+M.test = cmd("test")
+--- Ejecuta el proyecto o un script en una terminal (`pengu run`).
+M.run = cmd("run")
+--- Reejecuta al cambiar fuentes (`pengu watch`).
+M.watch = cmd("watch")
+--- Compila y ejecuta mostrando los tiempos por fase (`pengu time`).
+M.time = cmd("time")
+--- Evalúa una expresión (`pengu eval`).
+M.eval = cmd("eval")
+--- Muestra el C generado en un split (`pengu expand`).
+M.expand = cmd("expand")
+--- Formatea el buffer actual (`pengu fmt --stdin`).
+M.format = cmd("format")
+--- Genera la documentación Markdown (`pengu doc`).
+M.doc = cmd("doc")
+--- Genera un binding `.d.pengu` desde una cabecera de C (`pengu bind`).
+M.bind = cmd("bind")
+--- Inspecciona o regenera los assets embebidos (`pengu assets`).
+M.assets = cmd("assets")
+--- Ejecuta el arnés de benchmarks (`pengu benchmark`).
+M.benchmark = cmd("benchmark")
+--- Crea un proyecto nuevo (`pengu init`).
+M.init = cmd("init")
+--- Instala un módulo o binding externo (`pengu add`).
+M.add = cmd("add")
+--- Actualiza las dependencias (`pengu update`).
+M.update = cmd("update")
+--- Limpia `build/` y las cachés (`pengu clean`).
+M.clean = cmd("clean")
+--- Recoge los binarios de script en caché (`pengu gc`).
+M.gc = cmd("gc")
+--- Diagnóstico del toolchain y del proyecto (`pengu doctor`).
+M.doctor = cmd("doctor")
+--- Versión del toolchain (`pengu -V`).
+M.version = cmd("version")
 
 --- Reinicia / inicia el servidor LSP (equivalente a :PenguLspRestart).
 function M.restart()

@@ -1,10 +1,13 @@
 --- pengus.commands
--- Implementación de los comandos del plugin:
---   :PenguBuild, :PenguRun, :PenguCheck, :PenguFmt
--- y del formateo opcional al guardar (format_on_save).
+-- Implementación de los comandos del plugin. Todos giran alrededor del
+-- toolchain unificado `pengu` (PenguScript 2.0.x):
 --
--- Todas las funciones aceptan un número variable de argumentos (igual que
--- <f-args> de Vim) o una única tabla de argumentos si se llaman por API.
+--   proyecto:  init, add, update, clean, doctor
+--   build:     build, check, run, watch, expand, time, eval, test
+--   calidad:   fmt, doc, bind, assets, benchmark, gc
+--
+-- Las funciones aceptan varargs (igual que `<f-args>` de Vim) o una única
+-- tabla de argumentos cuando se llaman por la API Lua.
 local M = {}
 
 local config = require("pengus.config")
@@ -31,7 +34,7 @@ local function normalize_args(...)
   return out
 end
 
---- Añade `tail` al final de la lista `head` (devuelve una lista nueva).
+--- Añade `tail` al final de `head` (devuelve una lista nueva).
 local function append(head, tail)
   local out = {}
   for _, v in ipairs(head or {}) do
@@ -41,6 +44,13 @@ local function append(head, tail)
     table.insert(out, v)
   end
   return out
+end
+
+--- Argumentos por defecto configurados para un subcomando (`commands.<sub>`).
+local function default_args(sub)
+  local c = cfg()
+  local entry = c.commands and c.commands[sub]
+  return type(entry) == "table" and entry.args or nil
 end
 
 --- Directorio de trabajo según `commands.cwd` (project|buffer|cwd).
@@ -101,6 +111,8 @@ end
 --------------------------------------------------------------------------------
 
 --- Ejecuta un comando y vuelca su salida en la quickfix.
+-- Con `opts.quiet` no abre la quickfix si el comando termina bien (útil para
+-- comandos de acción como `init`, `add` o `clean`).
 local function run_to_qf(title, cmd, dir, opts)
   opts = opts or {}
   local jid = util.job(cmd, {
@@ -109,9 +121,11 @@ local function run_to_qf(title, cmd, dir, opts)
       local items = qf_items(lines)
       set_qf(title, items)
       if code == 0 then
-        if #items > 0 then
+        if #items > 0 and not opts.quiet then
           notify(("`%s` completado con %d aviso(s)."):format(title, #items), vim.log.levels.WARN)
           open_qf_if_any(items)
+        elseif #items > 0 then
+          notify(("`%s` completado."):format(title))
         else
           notify(("`%s` completado correctamente."):format(title))
         end
@@ -134,46 +148,163 @@ local function run_to_qf(title, cmd, dir, opts)
 end
 
 --------------------------------------------------------------------------------
--- :PenguBuild / :PenguCheck
+-- Salida de jobs en un buffer de solo lectura
 --------------------------------------------------------------------------------
 
-function M.build(...)
-  local c = cfg()
+--- Ejecuta un comando y muestra su salida en un split nuevo (código C generado
+-- por `pengu expand`, documentación, bindings...). `filetype` ajusta el
+-- resaltado del resultado.
+local function run_to_scratch(title, cmd, dir, filetype)
+  local jid = util.job(cmd, {
+    cwd = dir,
+    on_exit = function(lines, code)
+      while #lines > 0 and lines[#lines] == "" do
+        table.remove(lines)
+      end
+      if #lines == 0 then
+        notify(("`%s` no produjo salida (código %d)."):format(title, code), vim.log.levels.WARN)
+        return
+      end
+      vim.cmd("botright new")
+      local buf = vim.api.nvim_get_current_buf()
+      vim.bo[buf].buftype = "nofile"
+      vim.bo[buf].bufhidden = "wipe"
+      vim.bo[buf].swapfile = false
+      vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+      if filetype and filetype ~= "" then
+        vim.bo[buf].filetype = filetype
+      end
+      pcall(vim.api.nvim_buf_set_name, buf, title)
+      vim.bo[buf].modifiable = false
+      notify(("`%s` completado (código %d)."):format(title, code))
+    end,
+  })
+  if not jid then
+    notify(("No se pudo lanzar `%s`."):format(title), vim.log.levels.ERROR)
+  end
+  return jid
+end
+
+--------------------------------------------------------------------------------
+-- Terminal (run / watch)
+--------------------------------------------------------------------------------
+
+local function run_in_terminal(title, cmd, dir, opts)
+  opts = opts or {}
+  local split = opts.split or "botright"
+  local size = math.max(3, opts.size or 15)
+  local vertical = split == "vnew" or split == "vsplit" or split == "vertical"
+  local position = (split == "topleft" or split == "leftabove") and "topleft" or "botright"
+
+  vim.cmd(position .. (vertical and " vnew" or " new"))
+  vim.cmd((vertical and "vertical resize " or "resize ") .. size)
+
+  local buf = vim.api.nvim_get_current_buf()
+  pcall(vim.api.nvim_buf_set_name, buf, title)
+  local pid = vim.fn.termopen(cmd, { cwd = dir })
+  if pid == 0 then
+    vim.cmd("bwipeout!")
+    notify(("No se pudo abrir la terminal para `%s`."):format(title), vim.log.levels.ERROR)
+    return
+  end
+  vim.cmd("startinsert")
+  return pid
+end
+
+--------------------------------------------------------------------------------
+-- :PenguBuild / :PenguCheck / :PenguTest / :PenguDoc / ...
+--------------------------------------------------------------------------------
+
+--- Ejecuta `pengu <sub> [args...]` volcando la salida en la quickfix.
+local function exec_qf(sub, title, opts, ...)
   local bin = get_bin()
   if not bin then
     return
   end
-  local args = append(c.commands.build.args, normalize_args(...))
-  local cmd = append({ bin, "build" }, args)
-  run_to_qf("pengu build", cmd, work_dir(vim.api.nvim_get_current_buf()))
+  local args = append(default_args(sub), normalize_args(...))
+  local cmd = append({ bin, sub }, args)
+  run_to_qf(title or ("pengu " .. sub), cmd, work_dir(vim.api.nvim_get_current_buf()), opts)
+end
+
+--- Comandos de diagnóstico: la quickfix se abre si hay avisos o errores.
+local function diag(sub, title, ...)
+  exec_qf(sub, title, nil, ...)
+end
+
+--- Comandos de acción (escriben en disco): solo se abre la quickfix al fallar.
+local function action(sub, title, ...)
+  exec_qf(sub, title, { quiet = true }, ...)
+end
+
+function M.build(...)
+  diag("build", "pengu build", ...)
 end
 
 function M.check(...)
-  local c = cfg()
-  local bin = get_bin()
-  if not bin then
-    return
-  end
-  local args = append(c.commands.check.args, normalize_args(...))
-  local cmd = append({ bin, "check" }, args)
-  run_to_qf("pengu check", cmd, work_dir(vim.api.nvim_get_current_buf()))
+  diag("check", "pengu check", ...)
 end
 
 function M.test(...)
-  local c = cfg()
+  diag("test", "pengu test", ...)
+end
+
+function M.doc(...)
+  action("doc", "pengu doc", ...)
+end
+
+--- `pengu bind <header>`: muestra el binding `.d.pengu` generado en un split.
+function M.bind(...)
   local bin = get_bin()
   if not bin then
     return
   end
-  local testopts = (c.commands and c.commands.test) or {}
-  local args = append(testopts.args, normalize_args(...))
-  local cmd = append({ bin, "test" }, args)
-  run_to_qf("pengu test", cmd, work_dir(vim.api.nvim_get_current_buf()))
+  local args = append(default_args("bind"), normalize_args(...))
+  if #args == 0 then
+    notify("Uso: :PenguBind <cabecera.h> [--output FILE]", vim.log.levels.WARN)
+    return
+  end
+  local cmd = append({ bin, "bind" }, args)
+  return run_to_scratch("pengu bind", cmd, work_dir(vim.api.nvim_get_current_buf()), "pengus")
 end
 
+function M.assets(...)
+  diag("assets", "pengu assets", ...)
+end
+
+function M.benchmark(...)
+  diag("benchmark", "pengu benchmark", ...)
+end
+
+function M.time(...)
+  diag("time", "pengu time", ...)
+end
+
+function M.doctor(...)
+  diag("doctor", "pengu doctor", ...)
+end
+
+function M.init(...)
+  action("init", "pengu init", ...)
+end
+
+function M.add(...)
+  action("add", "pengu add", ...)
+end
+
+function M.update(...)
+  action("update", "pengu update", ...)
+end
+
+function M.clean(...)
+  action("clean", "pengu clean", ...)
+end
+
+function M.gc(...)
+  action("gc", "pengu gc", ...)
+end
 
 --------------------------------------------------------------------------------
--- :PenguRun (terminal)
+-- :PenguRun (terminal) y :PenguWatch
 --------------------------------------------------------------------------------
 
 function M.run(...)
@@ -185,46 +316,152 @@ function M.run(...)
   local runopts = (c.commands and c.commands.run) or {}
   local args = append(runopts.args, normalize_args(...))
   local cmd = append({ bin, "run" }, args)
-  local dir = work_dir(vim.api.nvim_get_current_buf())
+  return run_in_terminal("pengu run", cmd, work_dir(vim.api.nvim_get_current_buf()), runopts)
+end
 
-  local split = runopts.split or "botright"
-  local size = math.max(3, runopts.size or 15)
-  local vertical = split == "vnew" or split == "vsplit" or split == "vertical"
-  local position = (split == "topleft" or split == "leftabove") and "topleft" or "botright"
-
-  vim.cmd(position .. (vertical and " vnew" or " new"))
-  vim.cmd((vertical and "vertical resize " or "resize ") .. size)
-
-  local buf = vim.api.nvim_get_current_buf()
-  pcall(vim.api.nvim_buf_set_name, buf, "pengu run")
-  local pid = vim.fn.termopen(cmd, { cwd = dir })
-  if pid == 0 then
-    vim.cmd("bwipeout!")
-    notify("No se pudo abrir la terminal para `pengu run`.", vim.log.levels.ERROR)
+--- `pengu watch [script]`: recompila y reejecuta al cambiar cualquier fuente.
+function M.watch(...)
+  local c = cfg()
+  local bin = get_bin()
+  if not bin then
     return
   end
-  vim.cmd("startinsert")
-  return pid
+  local wopts = (c.commands and c.commands.watch) or {}
+  local args = append(wopts.args, normalize_args(...))
+  if #args == 0 then
+    -- Sin argumentos, `watch` necesita un archivo: usa el buffer actual.
+    local file = util.buffer_path(vim.api.nvim_get_current_buf())
+    if file then
+      args = { file }
+    end
+  end
+  local cmd = append({ bin, "watch" }, args)
+  return run_in_terminal("pengu watch", cmd, work_dir(vim.api.nvim_get_current_buf()), wopts)
+end
+
+--- `pengu expand FILE`: imprime el `bundle.c` generado en un split.
+function M.expand(...)
+  local bin = get_bin()
+  if not bin then
+    return
+  end
+  local args = append(default_args("expand"), normalize_args(...))
+  if #args == 0 then
+    local file = util.buffer_path(vim.api.nvim_get_current_buf())
+    if not file then
+      notify("El buffer actual no tiene archivo asociado.", vim.log.levels.ERROR)
+      return
+    end
+    args = { file }
+  end
+  local cmd = append({ bin, "expand" }, args)
+  return run_to_scratch("pengu expand", cmd, work_dir(vim.api.nvim_get_current_buf()), "c")
+end
+
+--- `pengu eval "EXPR"`: evalúa una expresión y notifica el resultado.
+-- Acepta la expresión como varargs (`:PenguEval 10 + 32`) o como tabla.
+function M.eval(...)
+  local bin = get_bin()
+  if not bin then
+    return
+  end
+  local raw = normalize_args(...)
+  if #raw == 0 then
+    notify("Uso: :PenguEval <expresión>", vim.log.levels.WARN)
+    return
+  end
+  local expr = table.concat(raw, " ")
+  local cmd = append({ bin, "eval" }, append(default_args("eval"), { expr }))
+  local out = vim.fn.system(cmd)
+  local code = vim.v.shell_error
+  out = (out or ""):gsub("%s+$", "")
+  if code ~= 0 then
+    notify(("`pengu eval` falló (código %d): %s"):format(code, out), vim.log.levels.ERROR)
+    return
+  end
+  notify("pengu eval → " .. out)
+  return out
+end
+
+--- `pengu -V`: notifica la versión del toolchain.
+function M.version()
+  local bin = get_bin()
+  if not bin then
+    return
+  end
+  local out = vim.fn.system({ bin, "-V" })
+  out = (out or ""):gsub("%s+$", "")
+  if vim.v.shell_error ~= 0 then
+    notify("No se pudo obtener la versión de `pengu`.", vim.log.levels.ERROR)
+    return
+  end
+  notify(out)
+  return out
 end
 
 --------------------------------------------------------------------------------
--- :PenguFmt
+-- :PenguFmt (a través de `pengu fmt --stdin`)
 --------------------------------------------------------------------------------
 
---- Sustituye el contenido del buffer por las líneas del archivo en disco,
--- conservando el cursor cuando el buffer se muestra en la ventana actual.
-local function replace_buffer_from_file(bufnr, path)
-  local lines = util.read_file_lines(path)
-  if not lines then
-    return false
+--- Formatea `lines` con `pengu fmt --stdin`.
+-- Devuelve la lista de líneas formateadas o `nil, error`.
+local function fmt_via_stdin(bin, args, lines, timeout_ms)
+  local cmd = append({ bin, "fmt", "--stdin" }, args)
+  local input = table.concat(lines, "\n")
+  if #lines > 0 then
+    input = input .. "\n"
   end
+
+  local stdout, stderr = {}, {}
+  local jid = vim.fn.jobstart(cmd, {
+    stdin = "pipe",
+    on_stdout = function(_, data)
+      for _, l in ipairs(data or {}) do
+        stdout[#stdout + 1] = l
+      end
+    end,
+    on_stderr = function(_, data)
+      for _, l in ipairs(data or {}) do
+        stderr[#stderr + 1] = l
+      end
+    end,
+  })
+  if jid <= 0 then
+    return nil, "No se pudo ejecutar `pengu fmt`."
+  end
+  vim.fn.chansend(jid, input)
+  vim.fn.chanclose(jid, "stdin")
+
+  local code = vim.fn.jobwait({ jid }, timeout_ms or -1)[1]
+  if code == -1 then
+    pcall(vim.fn.jobstop, jid)
+    return nil, "`pengu fmt` excedió el tiempo de espera."
+  end
+
+  local function trim_tail(list)
+    while #list > 0 and list[#list] == "" do
+      table.remove(list)
+    end
+  end
+  trim_tail(stdout)
+  trim_tail(stderr)
+
+  if code ~= 0 then
+    local detail = #stderr > 0 and table.concat(stderr, "\n") or table.concat(stdout, "\n")
+    return nil, ("`pengu fmt` falló (código %d). %s"):format(code, detail)
+  end
+  return stdout
+end
+
+--- Sustituye el contenido de `bufnr` conservando la vista cuando está visible.
+local function replace_buffer(bufnr, lines)
   local win = vim.api.nvim_get_current_win()
   local shown = vim.api.nvim_win_get_buf(win) == bufnr
   local view = shown and vim.fn.winsaveview() or nil
   local ok = pcall(vim.api.nvim_buf_call, bufnr, function()
     pcall(vim.cmd, "silent undojoin")
     vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.bo[bufnr].modified = false
+    vim.bo[bufnr].modified = true
   end)
   if ok and view then
     vim.fn.winrestview(view)
@@ -234,42 +471,23 @@ end
 
 function M.format(...)
   local buf = vim.api.nvim_get_current_buf()
-  local file = util.buffer_path(buf)
-  if not file then
-    notify("El buffer actual no tiene archivo asociado.", vim.log.levels.ERROR)
-    return
-  end
-  if vim.bo[buf].modified then
-    notify(
-      "El buffer tiene cambios sin guardar: guarda primero con :write y vuelve a ejecutar :PenguFmt.",
-      vim.log.levels.WARN
-    )
-    return
-  end
-  local c = cfg()
   local bin = get_bin()
   if not bin then
     return
   end
-  local args = append(c.commands.fmt.args, normalize_args(...))
-  local cmd = append({ bin, "fmt" }, args)
-  table.insert(cmd, file)
-
-  util.job(cmd, {
-    cwd = vim.fn.fnamemodify(file, ":h"),
-    on_exit = function(lines, code)
-      if code ~= 0 then
-        local extra = (#lines > 0 and " — " .. lines[1]) or ""
-        notify(("`pengu fmt` falló (código %d).%s"):format(code, extra), vim.log.levels.ERROR)
-        return
-      end
-      replace_buffer_from_file(buf, file)
-      notify("Archivo formateado con `pengu fmt`.")
-    end,
-    on_error = function()
-      notify("No se pudo ejecutar `pengu fmt`.", vim.log.levels.ERROR)
-    end,
-  })
+  local args = append(default_args("fmt"), normalize_args(...))
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  local formatted, err = fmt_via_stdin(bin, args, lines, -1)
+  if not formatted then
+    notify(err, vim.log.levels.ERROR)
+    return
+  end
+  if vim.deep_equal(formatted, lines) then
+    notify("El archivo ya estaba formateado.")
+    return
+  end
+  replace_buffer(buf, formatted)
+  notify("Archivo formateado con `pengu fmt`.")
 end
 
 --------------------------------------------------------------------------------
@@ -278,10 +496,8 @@ end
 
 local formatting_save = false
 
---- Formatea el buffer durante BufWritePre de forma síncrona y segura:
--- vuelca el contenido del buffer a un archivo temporal (extensión .pengu),
--- ejecuta `pengu fmt` sobre el temporal, espera el resultado y reemplaza el
--- buffer con la salida formateada. Así no se pierden cambios sin guardar.
+--- Formatea el buffer durante BufWritePre. Usa `pengu fmt --stdin`, así que
+-- funciona con cambios sin guardar y nunca toca el archivo en disco.
 function M._format_on_save(bufnr)
   if formatting_save then
     return
@@ -290,64 +506,35 @@ function M._format_on_save(bufnr)
   if not c.format_on_save then
     return
   end
-  local ft = vim.bo[bufnr].filetype
-  if ft ~= "pengus" then
+  if vim.bo[bufnr].filetype ~= "pengus" then
     return
   end
   local bin = get_bin()
   if not bin then
     return
   end
-  local file = util.buffer_path(bufnr)
-  if not file then
-    return
-  end
 
-  local ext = vim.fn.fnamemodify(file, ":e")
-  local tmp = vim.fn.tempname()
-  if ext ~= "" then
-    tmp = tmp .. "." .. ext
-  end
-
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  if not util.write_file_lines(tmp, lines) then
-    notify("No se pudo crear el archivo temporal para formatear.", vim.log.levels.ERROR)
-    return
-  end
-
-  local extra = append(c.commands.fmt.args, {})
   local fos_args = type(c.format_on_save) == "table" and (c.format_on_save.args or {}) or {}
-  local cmd = append({ bin, "fmt" }, append(extra, append(fos_args, { tmp })))
+  local args = append(default_args("fmt"), fos_args)
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
 
   formatting_save = true
-  local jid = util.job(cmd, { cwd = vim.fn.fnamemodify(tmp, ":h") })
-  local code = -1
-  if jid then
-    code = util.job_wait(jid, c.format_on_save_timeout or 30000)
-    if code == -1 then
-      vim.fn.jobstop(jid)
-      vim.fn.jobwait({ jid }, 2000)
-    end
-  end
+  local formatted, err = fmt_via_stdin(bin, args, lines, c.format_on_save_timeout or 30000)
   formatting_save = false
 
-  if code == 0 then
-    local formatted = util.read_file_lines(tmp)
-    if formatted then
-      pcall(vim.api.nvim_buf_call, bufnr, function()
-        pcall(vim.cmd, "silent undojoin")
-        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted)
-        vim.bo[bufnr].modified = true -- el guardado en curso escribirá el contenido nuevo
-      end)
-      notify("Formateado con `pengu fmt` antes de guardar.")
-    end
-  elseif code == -1 then
-    util.notify_once("fmt-on-save-timeout", "`pengu fmt` al guardar excedió el tiempo.", vim.log.levels.WARN)
-  else
-    util.notify_once("fmt-on-save-error", "`pengu fmt` falló al formatear en el guardado.", vim.log.levels.ERROR)
+  if not formatted then
+    util.notify_once("fmt-on-save-error", err or "`pengu fmt` falló al formatear en el guardado.", vim.log.levels.ERROR)
+    return
   end
-
-  os.remove(tmp)
+  if vim.deep_equal(formatted, lines) then
+    return
+  end
+  pcall(vim.api.nvim_buf_call, bufnr, function()
+    pcall(vim.cmd, "silent undojoin")
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted)
+    vim.bo[bufnr].modified = true -- el guardado en curso escribirá el contenido nuevo
+  end)
+  notify("Formateado con `pengu fmt` antes de guardar.")
 end
 
 --------------------------------------------------------------------------------
@@ -366,6 +553,7 @@ function M.setup()
       end,
     })
   end
+  return M
 end
 
 return M

@@ -1,71 +1,83 @@
 # 🐧 penguscript-nvim
 
-**Full PenguScript support for Neovim** — built-in LSP, filetype detection,
-syntax highlighting, `:Pengu*` commands and snippets. Lightweight, no mandatory
-dependencies, compatible with Neovim **0.8+** on Windows, Linux and macOS.
+**Soporte completo de PenguScript para Neovim** — LSP integrado, detección de
+filetype, resaltado de sintaxis, comandos `:Pengu*` y snippets. Ligero, sin
+dependencias obligatorias y compatible con Neovim **0.8+** en Windows, Linux y
+macOS.
+
+> Cubre el lenguaje y el toolchain **PenguScript 2.0.x** (referencia del lenguaje
+> y guía de estilo Pengunic).
 
 ---
 
-## ✨ Features
+## ✨ Características
 
-- **Automatic LSP server**: registers the `pengus` server (`pengu lsp --stdio`)
-  and starts it automatically when opening a `.pengu` / `.d.pengu` file — no
-  nvim-lspconfig required (it integrates with it when installed).
-- **Project root detection** via `root_pattern`: looks for `pengu.yaml`,
-  `pengu.toml`, `Pengu.toml` and `.git` walking up from the file.
-- **`pengus` filetype** for `.pengu` and `.d.pengu` files (dual mechanism:
+- **Servidor LSP automático**: registra el servidor `pengus` (`pengu lsp --stdio`)
+  y lo arranca al abrir un archivo `.pengu` / `.d.pengu`, sin necesidad de
+  nvim-lspconfig (y se integra con él si está instalado).
+- **Detección de la raíz del proyecto** (`root_pattern`): `pengu.yaml`,
+  `pengu.toml`, `Pengu.toml`, `pengu.lock`, `.pengufmt.toml` y `.git`.
+- **Filetype `pengus`** para `.pengu` y `.d.pengu` (mecanismo doble:
   `vim.filetype.add` + `ftdetect`).
-- **Syntax highlighting**: Full support for PenguScript (0.15+ / 0.14.x) in `syntax/pengus.vim`
-  (all keywords including `derive`, `cyclus`, `donum`, built-in concepts `Num`, `Par`, `Ordo`, ...,
-  soft keywords `frozen`/`borrowed`, primitive & container types, all 52 standard library modules + `arca`,
-  interpolation `"{var}"`, raw strings `r"..."`, multiline triples `"""`, and operators)
-  plus automatic Treesitter when a `pengus` parser is available (Neovim ≥ 0.10).
-- **Smart indentation**: automatic indentation calculation for colon-based blocks
-  and dedent patterns (`else:`, `else ->`, `else when`, `when`) in `indent/pengus.vim`.
-- **Commands**: `:PenguBuild`, `:PenguRun`, `:PenguCheck`, `:PenguTest`, `:PenguFmt`,
-  `:PenguLspStart`, `:PenguLspRestart`, `:PenguLspLog`.
-- **Optional format on save** (`pengu fmt`) using a safe temporary-file step
-  (never loses unsaved changes).
-- **Comprehensive snippets**: 70+ rich snippets available both as standard
-  VS Code format (`snippets/pengus.json` for LazyVim, blink.cmp, mini.snippets, etc.)
-  and native LuaSnip integration (`lua/pengus/snippets.lua`).
-- **No external dependencies**: you only need the `pengu` binary.
-  nvim-lspconfig, cmp-nvim-lsp and LuaSnip are used only when installed.
+- **Resaltado de sintaxis completo de 2.0** en `syntax/pengus.vim`: palabras
+  clave (incluidas `antiquus`, `unsafe:`, `do:`, `many`, `shard`, `where`),
+  palabras clave blandas (`frozen`, `inline`, `ritual`), los 12 conceptos
+  integrados (`Num`, `Integrum`, `Real`, `Par`, `Ordo`, `Vinculum`, `Imago`,
+  `Nexus`, `Forma`, `Iterabilis`, `Donum`, `Any`), todos los alias de primitivos
+  (`int8_t`…`uint64_t`, `short`, `long`, `uint`, `usize`, `isize`, `intptr_t`…),
+  contenedores (`list`, `slice`, `map`, `maybe`, `result`, `array`, `ref`), los
+  **27 módulos de la biblioteca estándar** y `arca`, atributos
+  (`@noreturn`, `@export`, `@deprecated`, `@inline`, `@cold`, `@packed`,
+  `@align`), interpolación `"{var}"`, cadenas raw `r"..."`, triples
+  `"""..."""` (y sus variantes raw) y operadores (incluidas las
+  asignaciones compuestas y el postfijo `at`). Si hay un parser Treesitter
+  `pengus` y Neovim ≥ 0.10, el plugin lo usa automáticamente.
+- **Sangría automática consciente de la sintaxis** (`indent/pengus.vim`):
+  bloques por `:` (incluidos `with:`, `do:`, `or:`, `unsafe:`, `antiquus`),
+  alineación de ramas (`else`, `else when`, `when … ->`, `or:`), continuación de
+  cadenas de métodos (`.eslabón` / `->eslabón`) y **cuerpos de C literales a
+  columna 0** dentro de literales triples.
+- **Comandos** para todo el toolchain `pengu`: compilación, ejecución, tests,
+  formato, documentación, bindings, assets, benchmarks y mantenimiento del
+  proyecto (ver la tabla de comandos).
+- **Formato al guardar** (`pengu fmt --stdin`) sin archivos temporales y sin
+  perder cambios sin guardar.
+- **161 snippets** en formato VS Code (`snippets/pengus.json`), válidos para
+  LuaSnip, LazyVim, blink.cmp, mini.snippets, etc.
+- **Sin dependencias externas**: solo necesitas el binario `pengu`.
+  nvim-lspconfig, cmp-nvim-lsp y LuaSnip se usan únicamente si están instalados.
 
-## 📦 Requirements
+## 📦 Requisitos
 
-- Neovim ≥ 0.8 (0.10+ recommended for native Treesitter).
-- The [`pengu`](https://github.com/TuGatito/penguscript) binary on your
-  `$PATH` (or configure its path, see below).
+- Neovim ≥ 0.8 (se recomienda 0.10+ para Treesitter nativo).
+- El binario [`pengu`](https://github.com/TuGatito/penguscript) en el `$PATH`
+  (o su ruta configurada, ver más abajo), versión **2.0.x**.
 
-> 💡 Screenshots will come once the PenguScript ecosystem is ready.
-> Highlighting works from day one thanks to the fallback syntax.
-
-## 🚀 Installation
+## 🚀 Instalación
 
 ### Lazy.nvim
 
-Create the file `~/.config/nvim/lua/plugins/pengus.lua` (on Windows:
-`~/AppData/Local/nvim/lua/plugins/pengus.lua`). Lazy.nvim automatically loads
-every spec file inside the `lua/plugins/` directory:
+Crea el archivo `~/.config/nvim/lua/plugins/pengus.lua` (en Windows:
+`~/AppData/Local/nvim/lua/plugins/pengus.lua`). Lazy.nvim carga automáticamente
+todos los archivos dentro de `lua/plugins/`:
 
 ```lua
 -- ~/.config/nvim/lua/plugins/pengus.lua
 return {
-  "TuGatito/penguscript-nvim", -- Replace with your user/repo
-  -- Add LuaSnip as a dependency ONLY if you want the snippets:
+  "TuGatito/penguscript-nvim", -- Sustituye por tu usuario/repositorio
+  -- Añade LuaSnip como dependencia SOLO si quieres los snippets:
   dependencies = {
-    "L3MON4D3/LuaSnip", -- optional, only needed for snippets
+    "L3MON4D3/LuaSnip", -- opcional, solo para snippets
   },
   config = function()
     require("pengus").setup {
-      -- All options are optional:
-      -- bin_path = "C:/tools/pengu.exe", -- if `pengu` is not on your PATH
-      -- format_on_save = true,           -- format on save
-      -- snippets = true,                 -- enable LuaSnip snippets (default: true)
+      -- Todas las opciones son opcionales:
+      -- bin_path = "C:/tools/pengu.exe", -- si `pengu` no está en el PATH
+      -- format_on_save = true,           -- formatear al guardar
+      -- snippets = true,                 -- snippets en LuaSnip (por defecto: true)
       -- lsp = {
       --   on_attach = function(client, bufnr)
-      --     -- your custom LSP keymaps here
+      --     -- tus keymaps de LSP aquí
       --   end,
       -- },
     }
@@ -89,19 +101,19 @@ use {
 ### vim-plug
 
 ```vim
-" After adding the plugin, run :PlugInstall
+" Tras añadir el plugin, ejecuta :PlugInstall
 Plug 'TuGatito/penguscript-nvim'
 
-" Optional: helptags so :help pengus works
+" Opcional: genera las etiquetas de ayuda para que :help pengus funcione
 Plug 'TuGatito/penguscript-nvim', { 'do': ':helptags ALL' }
 ```
 
 ```lua
--- In your Lua config (init.lua / after plug#begin):
+-- En tu configuración Lua (init.lua / tras plug#begin):
 require("pengus").setup {}
 ```
 
-### Manual (no plugin manager)
+### Manual (sin gestor de plugins)
 
 ```bash
 git clone https://github.com/TuGatito/penguscript-nvim.git \
@@ -109,258 +121,385 @@ git clone https://github.com/TuGatito/penguscript-nvim.git \
 nvim --headless "+helptags ALL" +qa
 ```
 
-Add this to your config and the plugin is active with its defaults (you don't
-need to call `setup()` if the defaults suit you):
+Añade esto a tu configuración y el plugin queda activo con sus valores por
+defecto (no hace falta llamar a `setup()` si te sirven):
 
 ```lua
-require("pengus").setup {} -- optional
+require("pengus").setup {} -- opcional
 ```
 
-## ⚙️ Configuration
+## ⚙️ Configuración
 
-Configuration is optional: without `setup()` the plugin works with its default
-values (automatic LSP included).
+La configuración es opcional: sin `setup()` el plugin funciona con sus valores
+por defecto (LSP automático incluido).
 
 ```lua
 require("pengus").setup {
-  -- Path to the `pengu` binary. When not set, resolved in this order:
+  -- Ruta al binario `pengu`. Si no se indica, se resuelve en este orden:
   --   vim.g.pengus_bin_path  ->  $PENGU_BIN_PATH  ->  "pengu" (PATH)
   bin_path = nil,
 
-  -- Filetypes handled by the plugin.
+  -- Filetypes que gestiona el plugin.
   filetypes = { "pengus" },
 
-  -- Start the LSP automatically when opening a PenguScript file.
+  -- Arranca el LSP automáticamente al abrir un archivo PenguScript.
   auto_attach = true,
 
-  -- Register `pengus` in lspconfig.configs when nvim-lspconfig is available.
+  -- Registra `pengus` en lspconfig.configs cuando nvim-lspconfig está disponible.
   register_lspconfig = true,
 
-  -- Markers used to detect the project root (root_pattern).
-  root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", ".git" },
+  -- Marcadores para detectar la raíz del proyecto (root_pattern).
+  root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", "pengu.lock", ".pengufmt.toml", ".git" },
 
   lsp = {
     name = "pengus",
     args = { "lsp", "--stdio" },
-    settings = {},                      -- settings sent to the server
-    handlers = nil,                     -- extra LSP handlers
-    on_attach = function(client, bufnr) -- your on_attach (keymaps, etc.)
+    settings = {},                      -- ajustes enviados al servidor
+    handlers = nil,                     -- handlers LSP adicionales
+    on_attach = function(client, bufnr) -- tu on_attach (keymaps, etc.)
       -- vim.keymap.set("n", "gd", vim.lsp.buf.definition, { buffer = bufnr })
     end,
-    capabilities = nil,   -- when unset: make_client_capabilities()
-                          -- augmented with cmp-nvim-lsp (if installed)
+    capabilities = nil,   -- si no se indica: make_client_capabilities()
+                          -- ampliado con cmp-nvim-lsp (si está instalado)
     flags = { debounce_text_changes = 150 },
-    env = nil,            -- extra environment variables for the server
-    log_level = nil,      -- e.g. vim.lsp.log_levels.DEBUG
+    env = nil,            -- variables de entorno extra para el servidor
+    log_level = nil,      -- p. ej. vim.lsp.log_levels.DEBUG
   },
 
   commands = {
-    -- Directory where build/check/run are executed:
-    --   "project" -> project root of the buffer
-    --   "buffer"  -> directory of the current file
-    --   "cwd"     -> Neovim's current directory (default)
+    -- Directorio donde se ejecutan los comandos:
+    --   "project" -> raíz del proyecto del buffer
+    --   "buffer"  -> directorio del archivo actual
+    --   "cwd"     -> directorio actual de Neovim (por defecto)
     cwd = "cwd",
     run = { split = "botright", size = 15, args = nil },
+    watch = { split = "botright", size = 15, args = nil },
     build = { args = nil },
     check = { args = nil },
+    test = { args = nil },
     fmt = { args = nil },
+    -- Cualquier otro subcomando acepta también `args = { ... }` aquí
+    -- (doc, bind, assets, benchmark, expand, time, doctor, init, add,
+    --  update, clean, gc, eval).
   },
 
-  -- Format with `pengu fmt` on save. true, false or { args = {...} }.
+  -- Formatea con `pengu fmt --stdin` al guardar. true, false o { args = {...} }.
   format_on_save = false,
   format_on_save_timeout = 30000, -- ms
 
   highlight = {
-    treesitter = "auto",  -- true | false | "auto" (uses the parser if present)
-    colors = {},          -- highlight group overrides, e.g.:
+    treesitter = "auto",  -- true | false | "auto" (usa el parser si existe)
+    colors = {},          -- sobrescritura de grupos, p. ej.:
     -- colors = { PengusKeyword = { fg = "#c586c0", bold = true } }
   },
 
-  -- Register the snippets in LuaSnip when it is installed.
+  -- Registra los snippets en LuaSnip si está instalado.
   snippets = true,
 
-  -- Messages via vim.notify.
+  -- Mensajes mediante vim.notify.
   notify = true,
 }
 ```
 
-> **Shorthands**: you can also pass `on_attach`, `capabilities` and `settings`
-> at the top level of `opts`; the plugin forwards them to the `lsp` section.
+> **Atajos**: también puedes pasar `on_attach`, `capabilities` y `settings` en el
+> nivel superior de `opts`; el plugin los reenvía a la sección `lsp`.
 
-### Changing the binary path
+### Cambiar la ruta del binario
 
 ```lua
--- Option 1: inside setup()
-require("pengus").setup { bin_path = "/path/to/pengu" }
+-- Opción 1: dentro de setup()
+require("pengus").setup { bin_path = "/ruta/a/pengu" }
 
--- Option 2: global variable (classic)
+-- Opción 2: variable global (clásica)
 vim.g.pengus_bin_path = "C:/tools/pengu.exe"
 
--- Option 3: environment variable
---   export PENGU_BIN_PATH=/path/to/pengu
+-- Opción 3: variable de entorno
+--   export PENGU_BIN_PATH=/ruta/a/pengu
 ```
 
-## ⌨️ Commands
+## ⌨️ Comandos
 
-| Command                 | Description                                                     |
-| ----------------------- | --------------------------------------------------------------- |
-| `:PenguBuild [args...]` | Runs `pengu build [args...]`; output goes to the quickfix.      |
-| `:PenguRun [args...]`   | Runs `pengu run [args...]` in a new terminal.                   |
-| `:PenguCheck [args...]` | Runs `pengu check [args...]` and shows the result in quickfix.  |
-| `:PenguTest [args...]`  | Runs `pengu test [args...]` and shows test results in quickfix. |
-| `:PenguFmt [args...]`   | Formats the current file with `pengu fmt`.                      |
-| `:PenguLspStart`        | Starts the LSP on the current buffer.                           |
-| `:PenguLspRestart`      | Restarts the LSP server.                                        |
-| `:PenguLspLog`          | Opens the LSP log file.                                         |
+| Comando | Descripción |
+| ------- | ----------- |
+| `:PenguBuild [args...]` | `pengu build [args...]`; la salida va a la quickfix. |
+| `:PenguRun [script] [args...]` | `pengu run` en una terminal (modo proyecto o script). |
+| `:PenguCheck [args...]` | `pengu check [args...]`; resultado en la quickfix. |
+| `:PenguTest [args...]` | `pengu test [args...]`; resultado en la quickfix. |
+| `:PenguWatch [script]` | `pengu watch`: recompila y reejecuta al cambiar fuentes. |
+| `:PenguTime [script]` | `pengu time`: tiempos por fase (imports, check, codegen, C, ejecución). |
+| `:PenguEval <expr>` | `pengu eval "<expr>"`: evalúa una expresión y la notifica. |
+| `:PenguExpand [file]` | `pengu expand`: muestra el `bundle.c` generado en un split. |
+| `:PenguFmt [args...]` | Formatea el buffer con `pengu fmt --stdin`. |
+| `:PenguDoc [args...]` | `pengu doc`: genera la documentación Markdown del proyecto. |
+| `:PenguBind [header]` | `pengu bind`: genera un binding `.d.pengu` desde cabeceras de C. |
+| `:PenguAssets [--list]` | `pengu assets`: inspecciona o regenera los assets embebidos. |
+| `:PenguBench [args...]` | `pengu benchmark`: arnés de benchmarks del proyecto. |
+| `:PenguInit <name>` | `pengu init`: crea un proyecto nuevo. |
+| `:PenguAdd <url>` | `pengu add`: instala un módulo o binding externo. |
+| `:PenguUpdate` | `pengu update`: actualiza las dependencias. |
+| `:PenguClean` | `pengu clean`: limpia `build/` y las cachés. |
+| `:PenguGc` | `pengu gc`: recoge los binarios de script en caché. |
+| `:PenguDoctor` | `pengu doctor`: diagnóstico del toolchain y del proyecto. |
+| `:PenguVersion` | `pengu -V`: muestra la versión del toolchain. |
+| `:PenguLspStart` | Arranca el LSP en el buffer actual. |
+| `:PenguLspRestart` | Reinicia el servidor LSP. |
+| `:PenguLspLog` | Abre el archivo de log del LSP. |
 
-Lua equivalents are also available (`require("pengus").build()`, `.run()`,
-`.check()`, `.test()`, `.format()`, `.restart()`, `.open_log()`).
+También hay equivalentes Lua (`require("pengus").build()`, `.run()`,
+`.check()`, `.test()`, `.watch()`, `.time()`, `.eval()`, `.expand()`,
+`.format()`, `.doc()`, `.bind()`, `.assets()`, `.benchmark()`, `.init()`,
+`.add()`, `.update()`, `.clean()`, `.gc()`, `.doctor()`, `.version()`,
+`.restart()`, `.open_log()`), que aceptan una tabla de argumentos o varargs.
 
 ## 🧠 LSP
 
-- The server is registered under the name **`pengus`**.
-- Startup is **automatic** when opening files with the `pengus` filetype
-  (disable it with `auto_attach = false` and use `:PenguLspStart`).
-- The client capabilities enable completion, hover, definition, references,
-  rename, diagnostics, etc., as advertised by the server. Add your own
-  keymaps with `lsp.on_attach`.
-- If **nvim-lspconfig** is installed, `require("lspconfig").pengus.setup {}`
-  also works (the plugin registers it on its own). You can manage the server
-  with lspconfig and disable the plugin's auto-start:
+- El servidor se registra con el nombre **`pengus`**.
+- El arranque es **automático** al abrir archivos con filetype `pengus`
+  (desactívalo con `auto_attach = false` y usa `:PenguLspStart`).
+- Las capacidades del cliente habilitan completado, hover, definición,
+  referencias, renombrado, diagnósticos, símbolos, acciones de código y formato
+  de documento, tal como los anuncia el servidor. Añade tus keymaps con
+  `lsp.on_attach`.
+- Si **nvim-lspconfig** está instalado, `require("lspconfig").pengus.setup {}`
+  también funciona (el plugin lo registra por su cuenta). Puedes gestionar el
+  servidor con lspconfig y desactivar el arranque automático del plugin:
 
 ```lua
--- User who prefers to manage everything with lspconfig:
+-- Usuario que prefiere gestionarlo todo con lspconfig:
 require("pengus").setup { auto_attach = false }
 require("lspconfig").pengus.setup {
   on_attach = function(client, bufnr) ... end,
 }
 ```
 
-## 📐 Filetype, syntax & indentation
+## 📐 Filetype, sintaxis y sangría
 
-| Extension      | Filetype |
-| -------------- | -------- |
-| `foo.pengu`    | `pengus` |
-| `foo.d.pengu`  | `pengus` |
+| Extensión | Filetype |
+| --------- | -------- |
+| `foo.pengu` | `pengus` |
+| `foo.d.pengu` | `pengus` |
 
-- **Syntax**: `syntax/pengus.vim` provides complete highlighting for PenguScript
-  (0.15+ / 0.14.x) (keywords including `derive`, `cyclus`, `donum`, built-in concepts
-  `Num`, `Par`, `Ordo`, ..., soft keywords `frozen`/`borrowed`, types, containers,
-  all 52 standard library modules + `arca`, string interpolation `"{name}"`, raw strings,
-  triple multiline quotes, and operators). When a **Treesitter** `pengus` parser is installed
-  and Neovim ≥ 0.10, the plugin can use it automatically (`highlight.treesitter = "auto"`).
-- **Indentation**: `indent/pengus.vim` automatically indents lines after colons `:`
-  and dedents on `else:`, `else ->`, `else when`, or `when`.
+- **Sintaxis** (`syntax/pengus.vim`): cobertura de PenguScript 2.0.x — palabras
+  clave y blandas, conceptos integrados, alias de primitivos y contenedores, los
+  27 módulos de `std.*` y `arca`, atributos, comentarios `#` / `##`,
+  interpolación `"{expr}"`, cadenas raw y triples, caracteres, números
+  (hex/binarios/flotantes) y operadores. Con un parser Treesitter `pengus`
+  instalado y Neovim ≥ 0.10, el plugin puede usarlo automáticamente
+  (`highlight.treesitter = "auto"`).
+- **Sangría** (`indent/pengus.vim`): **4 espacios**, nunca tabuladores (la
+  convención oficial y lo que impone `pengu fmt`). Abre un nivel tras cualquier
+  `:` de bloque; alinea `else`, `else when`, `else ->`, `when … ->` y `or:`;
+  sangra las continuaciones de cadenas de métodos; y deja el **C de los bloques
+  `antiquus` a columna 0**.
+- **Comentarios**: `#` normal, `##` de documentación (los usa `pengu doc` y el
+  hover del LSP).
 
 ## ✂️ Snippets
 
-Snippets are provided in both **standard VS Code JSON format** (`snippets/pengus.json`,
-auto-discovered by LazyVim, `blink.cmp`, `mini.snippets`, etc.) and native **LuaSnip**:
+Los snippets están en **formato VS Code** en `snippets/pengus.json` (una única
+fuente de verdad) y los carga cualquiera de los motores habituales: LuaSnip
+(mediante el cargador de VS Code, que respeta el `package.json` del plugin),
+LazyVim, `blink.cmp`, `mini.snippets`, etc. `lua/pengus/snippets.lua` solo
+conecta ese catálogo con LuaSnip y, si su cargador de VS Code no estuviera
+disponible, registra el mismo catálogo con un conversor propio.
 
-| Trigger | Expansion / Description |
+Los cuerpos usan 4 espacios, la indentación oficial de PenguScript.
+
+| Trigger | Expansión / Descripción |
 | ------- | ----------------------- |
-| `main` | `weave main into int:` entry point |
-| `mainv` | `weave main into void:` |
-| `weave` | `weave name with params into type:` |
-| `weaveno` | `weave name into type:` |
-| `weavein` | `weave inline name with ... into ...:` |
-| `weaverit`| `weave ritual name ... into ...:` static method |
-| `weaveshard`| `weave name shard T with ... into ...:` generic |
-| `weaveshardwhere` | `weave name shard T where T: Num with ... into ...:` with bounds |
-| `lambda` | `lambda x as int into expr` |
-| `declare` | `declare c_func with ... into ...` |
-| `declarevar` | `declare printf with fmt as ref to frozen char, ... into int` |
-| `rune` | `rune Name:` struct definition |
-| `runeshard` | `rune Name shard T:` generic struct |
-| `runederive` | `rune Name derive Par, Ordo:` struct with derived concepts |
-| `runecyclus` | `rune Node cyclus shard T:` self-referential struct |
-| `echo` | `echo Name:` union definition |
-| `omen` | `omen Name:` enum / algebraic data type |
-| `omenstr` | `omen Name with string:` string-valued omen |
-| `omenpayload`| `omen Name:` with variant payload |
-| `concept` | `concept Name:` trait / interface definition |
-| `conceptshard` | `concept Name shard T:` generic concept |
-| `conceptwhere` | `concept Name shard T where T: Bound:` bounded concept |
-| `bind` | `bind Type with Concept:` implementation |
-| `enchanting` | `enchanting Type:` methods block |
-| `enchantingshard`| `enchanting map of shard K to shard V:` generic container enchanting |
-| `alias` / `seal` | `alias Name as Type` / `seal UserId as int` |
-| `let` / `var` | `let x as type is val` / `var x as type is val` |
-| `letin` / `varin` | Inferred local bindings (`let x is val` / `var x is val`) |
-| `letb` / `varb` | `let borrowed x ...` / `var borrowed x ...` non-owning |
-| `destructlet` | `let (x, y) is record` destructuring |
-| `destructvar` | `var (id, label) as (int, string) is record` typed destructuring |
-| `const` | `const NAME as type is val` compile-time constant |
-| `static` | `static var x as type is val` function-static variable |
-| `donum` | `donum Type` zero/default value expression |
-| `set` / `setdot` | `set x is val` / `set .field is val` |
-| `setadd` / `setsub` | `set x += val` / `set x -= val` compound assignments |
-| `setmul` / `setdiv` | `set x *= val` / `set x /= val` compound assignments |
-| `if` / `ifelse` | `if cond:` / `else:` block |
-| `ifmaybe` | `if u as User is user:` maybe unwrap binding |
-| `ifexpr` | `if cond then true_val else false_val` ternary expression |
-| `unless` | `unless cond:` |
-| `while` | `while cond:` |
-| `for` / `forin` | `for item in col:` iteration loop |
-| `forfrom` / `forstep` | `for i from 0 to 10:` / with `step 1` |
-| `foridx` | `for i, item in col:` indexed iteration |
-| `forcomp` | `for x in col then expr` list comprehension |
-| `forcompwhen` | `for x in col when cond then expr` filtered list comprehension |
-| `judge` / `when` | `judge expr: when Pattern -> result else -> fallback` pattern match |
-| `do` | `do:` block expression evaluating to its tail value |
-| `withblock` | `var x as Type with:` builder block |
-| `withtarget` | `with target:` edit block |
-| `withcol` | `with collection:` in-place collection builder (`.push`, `.put`, etc.) |
-| `withnested` | `set .field is with:` nested builder block |
-| `calling` / `call` | `calling func with args` / without args |
-| `banish` | `banish ptr` explicit heap deallocation |
-| `defer` / `deferbanish` | `defer stmt` / `defer banish ptr` LIFO scope cleanup |
-| `errdefer` / `errdeferbanish` | `errdefer stmt` / `errdefer banish ptr` error cleanup |
-| `try` | `try calling func with args` unwrap & error propagation |
-| `orelse` / `orreturn` | `maybe_val or else fallback` / `expr or return err` |
-| `orblock` | `calling risky or: let err is error` failure block |
-| `sigil` / `essence` | `sigil of var` (&x) / `essence of ptr` (*ptr) |
-| `bytesof` | `bytes of str` byte pointer view |
-| `transmute` / `sizeof` | `transmute val to Type` / `size of Type` |
-| `test` | `test "name":` unit test block |
-| `whencc` / `whenos` | `when cond:` / `when os == "..."` compile-time conditional |
-| `whendebug` / `whenchain` | `when debug:` / `else when ... else:` compile-time chains |
-| `print` / `println` | Builtin `print` / `std.spark.println` |
-| `printspark` | `std.spark.print` (without newline) |
-| `arcastr` / `arcaptr` / `arcabytes` | Embedded asset helpers (`arca.string`, `arca.ptr`, `arca.bytes`) |
-| `ffislice` / `ffistr` / `fficstr` | C FFI bridge helpers (`slice_from_ptr`, `string_from_cstr`, `cstr_from_string`) |
+| `main` | Punto de entrada `main` con retorno int |
+| `mainv` | Punto de entrada `main` sin retorno (void) |
+| `weave` | Declaración de función con parámetros y tipo de retorno |
+| `weaveno` | Declaración de función sin parámetros |
+| `weavein` | Función con modificador `inline` (always_inline en C) |
+| `inlineweave` | Función con `inline` antepuesto a `weave` |
+| `weaverit` | Método ritual estático (constructor `new`, `from_*`, `with_*`) |
+| `weaveshard` | Función genérica con un parámetro `shard` |
+| `weaveshardwhere` | Función genérica con bounds `where T: Concept` |
+| `weaveshard2` | Función genérica con dos parámetros de tipo |
+| `weavemany` | Función variádica segura respaldada por slice (`many T`) |
+| `declare` | Prototipo de función externa de C (sin cuerpo y sin `:`) |
+| `declarevar` | Prototipo de C con argumentos variádicos crudos (`...`, solo en `declare`) |
+| `lambda` | Función anónima con parámetros tipados |
+| `lambdano` | Función anónima sin parámetros |
+| `antiquus` | Función con cuerpo C literal (el C va a columna 0) |
+| `antiquusexport` | `antiquus` con símbolo C estable, raíz del DCE |
+| `rune` | Definición de estructura (rune / struct de C) |
+| `runeshard` | Estructura genérica con parámetro `shard` |
+| `runederive` | `rune` con implementaciones automáticas de concepts |
+| `runecyclus` | `cyclus` recursivo con indirección por puntero |
+| `runecyclusg` | `cyclus` genérico (lista enlazada / árbol) |
+| `runepacked` | `rune` sin relleno: solo para fronteras binarias |
+| `runealign` | `rune` con alineación explícita (SIMD, DMA, ...) |
+| `echo` | Unión de C (`echo`); leerla emite el warning W0002 |
+| `omen` | Enum numérico con valores explícitos |
+| `omenstr` | Omen cuyas variantes evalúan a su propio nombre (sin payloads) |
+| `omenpayload` | Tipo suma con cargas útiles por variante |
+| `concept` | Contrato de compile-time (los miembros no llevan cuerpo ni `:`) |
+| `conceptshard` | Contrato genérico parametrizado con `shard` |
+| `conceptwhere` | Concept genérico restringido por otro concept |
+| `bind` | Implementación de un concept para un tipo |
+| `enchanting` | Bloque `enchanting` con un método de instancia y un `ritual` |
+| `enchantingshard` | `enchanting` genérico sobre un contenedor estándar (monomorfizado) |
+| `enchantingprim` | `enchanting` genérico de primitivos; aquí `self` es un valor |
+| `enchantingconcrete` | Bloque concreto que tiene prioridad sobre el genérico |
+| `alias` | Alias estructural transparente |
+| `seal` | Newtype fuerte: exige conversiones explícitas con `to` |
+| `opaque` | Handle C incompleto, usado siempre tras `ref to` |
+| `fnalias` | Alias de tipo función (`FnType`) |
+| `let` | Binding local inmutable con tipo explícito |
+| `letin` | Binding local inmutable con tipo inferido |
+| `var` | Variable local mutable con tipo explícito |
+| `varin` | Variable local mutable con tipo inferido |
+| `letmaybe` | Binding de un `maybe T` presente (el tipo lo infiere el valor) |
+| `destructlet` | Desestructuración de rune, array, slice o list |
+| `destructvar` | Desestructuración mutable con tipo por elemento |
+| `destructtuple` | Desestructuración de un retorno múltiple (tupla) |
+| `const` | Constante top-level plegada en compile-time (nunca `let`/`var`) |
+| `static` | Estado persistente entre llamadas (patrón de módulo con estado) |
+| `some` | Constructor de `maybe T` con valor presente |
+| `maybenone` | Constructor de `maybe T` vacío |
+| `donum` | Valor cero/por defecto de un tipo (compound literal de C) |
+| `set` | Reasignación de un objetivo mutable |
+| `setdot` | Asignación de campo dentro de un bloque `with:` |
+| `setarrow` | Mutación de un campo de `self` dentro de un método |
+| `setat` | Asignación a un contenedor indexado (los paréntesis del índice importan) |
+| `setessence` | Escritura a través de un puntero (`*ptr = valor`) |
+| `setadd` | Asignación compuesta numérica (+=); nunca con strings |
+| `setsub` | Asignación compuesta numérica (-=) |
+| `setmul` | Asignación compuesta numérica (*=) |
+| `setdiv` | Asignación compuesta numérica (/=) |
+| `setmod` | Asignación compuesta de módulo (%=), solo enteros |
+| `setband` | Asignación compuesta bit a bit (&=) |
+| `setbor` | Asignación compuesta bit a bit (|=) |
+| `setbxor` | Asignación compuesta bit a bit (^=) |
+| `setshl` | Asignación compuesta de desplazamiento (<<=) |
+| `setshr` | Asignación compuesta de desplazamiento (>>=) |
+| `if` | Condicional `if` |
+| `ifelse` | Condicional `if` / `else` |
+| `ifmaybe` | Desempaqueta un `maybe T` con binding tipado (forma Pengunic) |
+| `ifexpr` | Expresión `if ... then ... else ...` en una línea |
+| `ifvalue` | Bloque `if` que produce un valor |
+| `unless` | `unless` equivale a `if not cond` |
+| `unlesselse` | `unless` con rama `else` |
+| `while` | Bucle `while` |
+| `for` | Iteración sobre array, list, slice, string, map o rango |
+| `forin` | Iteración sobre una colección |
+| `foridx` | Iteración con índice (o `_` para descartarlo) |
+| `forfrom` | Rango numérico semiabierto `[0, 10)` |
+| `forstep` | Rango numérico con paso (admite `step` negativo) |
+| `forrange` | Iteración sobre un rango `a to b` |
+| `forcomp` | List comprehension `for ... then ...` |
+| `forcompwhen` | List comprehension filtrada `for ... when ... then ...` |
+| `judge` | Coincidencia de patrones exhaustiva |
+| `when` | Rama de un `judge` (también sirve para literales) |
+| `whenpayload` | Extrae la carga útil de una variante de `omen` |
+| `whenguard` | Patrón con guarda `if <cond>` |
+| `do` | Bloque de valor: evalúa a su última expresión |
+| `unsafe` | Opt-out de comprobaciones de límites (emite el warning W0007) |
+| `withblock` | Construcción de un `rune` con bloque `with:` |
+| `withtarget` | Mutación in-place de un valor o colección existente |
+| `withcol` | Bloque `with` con métodos abreviados de contenedor |
+| `withnested` | Constructor `with:` anidado (infiere el tipo destino) |
+| `withlit` | Literal de struct con campos explícitos |
+| `withshort` | Forma corta: el campo toma el binding del mismo nombre (no convierte tipos) |
+| `mapindent` | Literal de mapa con sintaxis de bloque indentado |
+| `structindent` | Literal de struct con sintaxis de bloque indentado |
+| `arrayindent` | Array multidimensional con sintaxis de bloque indentado |
+| `calling` | Llamada a función o método con argumentos |
+| `call` | Llamada sin argumentos (`calling` es obligatorio) |
+| `callingof` | Argumento de tipo explícito cuando la inferencia no puede verlo |
+| `callingnamed` | Argumentos con nombre (`name is valor`) |
+| `chain` | Cadena de métodos: un eslabón por línea; el `with` es del último |
+| `banish` | Liberación explícita de memoria del heap (nunca sobre vistas) |
+| `defer` | Ejecución diferida al salir del ámbito (LIFO) |
+| `deferbanish` | Libera al salir del ámbito (el idioma canónico de limpieza) |
+| `defercall` | Recursos de C se liberan con SU cleanup, no con `banish` |
+| `errdefer` | Limpieza solo en la ruta de retorno de error |
+| `errdeferbanish` | Libera solo si la función termina devolviendo error |
+| `try` | Desempaqueta o propaga el fallo; exige retorno `maybe`/`result` |
+| `orelse` | Valor o alternativa perezosa si falta o falla |
+| `orreturn` | Devuelve de inmediato y ejecuta `defer`/`errdefer` |
+| `orblock` | Manejo rico del fallo; `error` solo existe dentro del bloque |
+| `sigil` | Toma la dirección de un lvalue (`&x`) |
+| `essence` | Desreferencia un puntero (`*ptr`) |
+| `bytesof` | Préstamo de bytes: `ref to frozen byte` para string, `ref to byte` para arrays |
+| `transmute` | Reinterpretación a nivel de bits; siempre emite el warning W0001 |
+| `sizeof` | Tamaño en bytes en compile-time (devuelve `usize`) |
+| `ord` | Valor del byte de una cadena de un carácter |
+| `chr` | Cadena de un carácter a partir de un código 0–255 |
+| `memalloc` | Reserva un valor del heap con `std.memoria` (zeroed por defecto) |
+| `memallocarray` | Array del heap con liberación diferida |
+| `memfill` | Relleno tipado de un búfer reservado con `std.memoria` |
+| `test` | Bloque de prueba unitaria nativo (`pengu test`) |
+| `testassert` | Aserción de `std.ward` dentro de un bloque `test` |
+| `whencc` | `when` de compile-time (declaraciones o sentencias) |
+| `whenchain` | Cadena de compilación condicional con rama de reserva |
+| `whenexpr` | Ternario evaluado en compile-time |
+| `whendebug` | Bloque compilado solo con el perfil `debug` |
+| `whendefined` | Compilación condicional según un `-D NAME` |
+| `attrnoreturn` | Weave `into void` que nunca retorna (exige garantía real) |
+| `attrexport` | Fija el símbolo C emitido; usa prefijo `pengu_<módulo>_` |
+| `attrdeprecated` | Marca un símbolo como obsoleto con motivo y reemplazo |
+| `attrinline` | Fuerza la inclusión en línea en el C generado |
+| `attrcold` | Marca una ruta fría para el optimizador de C |
+| `attrpacked` | Elimina el relleno del `rune` (solo en fronteras binarias) |
+| `attralign` | Fija la alineación (potencia de dos entre 1 y 128) |
+| `import` | Importación de módulo |
+| `importas` | Importación con alias (solo si colisiona o es muy largo) |
+| `include` | Inclusión de cabecera de C (`#include`) |
+| `link` | Directiva de enlazado de una librería de C |
+| `insignia` | Prefija los símbolos C del módulo (evita colisiones) |
+| `print` | Builtin `print` del compilador (se traduce a `printf`) |
+| `println` | Imprime con salto de línea mediante `std.spark` |
+| `printspark` | Imprime sin salto de línea mediante `std.spark` |
+| `eprintln` | Imprime en stderr mediante `std.spark` |
+| `interp` | Interpolación `{expr}`: la única forma de componer strings |
+| `arcastr` | Copia con posesión del recurso embebido (libérala con `banish`) |
+| `arcaptr` | Puntero directo a `.rodata` (vista: nunca `banish`) |
+| `arcabytes` | Vista `slice of byte` sin posesión (nunca `banish`) |
+| `arcasize` | Tamaño en bytes del recurso embebido (0 si no existe) |
+| `ffislice` | Vista `slice` sobre un búfer de C (no propietaria) |
+| `ffistr` | Convierte un `char*` terminado en NUL en un `string` propio |
+| `fficstr` | Obtiene un `ref to char` sin posesión desde un `string` |
+| `ffibytes` | Vista de bytes sobre un `string` de PenguScript |
+| `docmod` | Docstring de módulo obligatorio, antes de cualquier directiva |
+| `docfn` | Docstring de función con las secciones canónicas |
+| `doctype` | Docstring de `rune` / `omen` / `seal` con invariantes y memoria |
+| `docmem` | Sección de memoria para documentar la propiedad |
+| `docantiquus` | Docstring obligatorio de un `antiquus` público |
 
-## 📁 Repository structure
+## 📁 Estructura del repositorio
 
 ```
 penguscript-nvim/
 ├── README.md
 ├── LICENSE            (MIT)
-├── package.json       (manifest for VS Code / Neovim snippet discovery)
-├── doc/pengus.txt     (:help docs)
+├── package.json       (manifiesto para el descubrimiento de snippets)
+├── doc/pengus.txt     (documentación :help)
 ├── snippets/
-│   └── pengus.json    (VS Code format snippets)
+│   └── pengus.json    (snippets en formato VS Code, 4 espacios)
 ├── indent/
-│   └── pengus.vim     (auto-indentation)
+│   └── pengus.vim     (sangría automática)
 ├── lua/pengus/
-│   ├── init.lua       (entry point / public API)
-│   ├── config.lua     (default options and merge)
-│   ├── lsp.lua        (LSP configuration)
-│   ├── commands.lua   (:Pengu* commands and formatting)
-│   ├── highlights.lua (optional Treesitter and colors)
-│   ├── snippets.lua   (LuaSnip & VS Code loader)
-│   └── util.lua       (internal utilities)
-├── plugin/pengus.vim  (commands and auto-load)
+│   ├── init.lua       (punto de entrada / API pública)
+│   ├── config.lua     (opciones por defecto y mezcla)
+│   ├── lsp.lua        (configuración del LSP)
+│   ├── commands.lua   (comandos :Pengu* y formato)
+│   ├── highlights.lua (Treesitter opcional y colores)
+│   ├── snippets.lua   (carga del catálogo de snippets)
+│   └── util.lua       (utilidades internas)
+├── plugin/pengus.vim  (comandos y carga automática)
 ├── ftdetect/pengus.vim
 ├── ftplugin/pengus.vim
-└── syntax/pengus.vim  (comprehensive syntax highlighting)
+└── syntax/pengus.vim  (resaltado de sintaxis)
 ```
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-Issues and pull requests are welcome in the repository. Please open an issue
-before large changes.
+Las issues y los pull requests son bienvenidos en el repositorio. Abre una issue
+antes de cambios grandes.
 
-## 📄 License
+## 📄 Licencia
 
-MIT — see the [LICENSE](./LICENSE) file. © 2026 TuGatito.
+MIT — consulta el archivo [LICENSE](./LICENSE). © 2026 TuGatito.

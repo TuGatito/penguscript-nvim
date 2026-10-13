@@ -9,25 +9,32 @@ CONTENIDO                                    *pengus-contents*
   4. Comandos ....................... |pengus-commands|
   5. LSP ........................... |pengus-lsp|
   6. Formato al guardar ............. |pengus-format-on-save|
-  7. Funciones Lua .................. |pengus-api|
-  8. Licencia ....................... |pengus-license|
+  7. Sintaxis, sangría y snippets ... |pengus-syntax|
+  8. Funciones Lua .................. |pengus-api|
+  9. Licencia ....................... |pengus-license|
 
 ==============================================================================
 1. INTRODUCCIÓN                                     *pengus-introduction*
 
-penguscript-nvim proporciona soporte completo para PenguScript
+penguscript-nvim proporciona soporte completo para PenguScript 2.0.x
 (extensiones .pengu y .d.pengu, filetype "pengus"):
 
   - Servidor LSP `pengu lsp --stdio`, arrancado automáticamente y con
     detección de la raíz del proyecto (pengu.yaml, pengu.toml, Pengu.toml,
-    .git).
+    pengu.lock, .pengufmt.toml, .git).
   - Resaltado de sintaxis: Treesitter si hay parser `pengus` (Neovim >= 0.10)
-    con respaldo clásico en syntax/pengus.vim (versión 0.15+ / 0.14.x, con
-    soporte para derive, cyclus, donum, conceptos, colecciones y 52+ módulos stdlib).
-  - Sangría automática sensible a bloques y palabras clave (indent/pengus.vim).
-  - Comandos :PenguBuild, :PenguRun, :PenguCheck, :PenguTest, :PenguFmt,
-    :PenguLspStart, :PenguLspRestart, :PenguLspLog.
-  - Colección de 70+ snippets en formato VSCode y nativo de LuaSnip.
+    con respaldo clásico en syntax/pengus.vim, con cobertura de la versión
+    2.0.x: `antiquus`, `unsafe:`, `do:`, palabras clave blandas
+    (`frozen`, `inline`, `ritual`), los 12 conceptos integrados, todos los
+    alias de primitivos, los 27 módulos de `std.*` más `arca`, atributos
+    (`@noreturn`, `@export`, `@deprecated`, `@inline`, `@cold`, `@packed`,
+    `@align`) y operadores.
+  - Sangría automática de 4 espacios consciente de la sintaxis
+    (indent/pengus.vim), incluidos los cuerpos de C de `antiquus`.
+  - Comandos para todo el toolchain `pengu`: compilación, ejecución, tests,
+    formato, documentación, bindings, assets y mantenimiento del proyecto.
+  - Más de 150 snippets en formato VS Code (snippets/pengus.json), válidos
+    para LuaSnip, LazyVim, blink.cmp y mini.snippets.
 
 Requiere el binario `pengu` en el $PATH (o configurar su ruta). No depende de
 otros plugins; nvim-lspconfig y LuaSnip solo se usan si están instalados.
@@ -43,11 +50,10 @@ Con Lazy.nvim: >
     -- dependencies = { "L3MON4D3/LuaSnip" },   -- solo para snippets
   }
 <
-
 Con Packer: >
-  use { "TuGatito/penguscript-nvim", config = function() require("pengus").setup() end }
+  use { "TuGatito/penguscript-nvim",
+      \ config = function() require("pengus").setup() end }
 <
-
 Con vim-plug: >
   Plug "TuGatito/penguscript-nvim"   " y tras instalarlo: :helptags ALL
 <
@@ -59,7 +65,8 @@ Con vim-plug: >
   require("pengus").setup {
     bin_path = "C:/tools/pengu.exe",   -- ruta del binario (opcional)
     auto_attach = true,                -- arranca el LSP al abrir .pengu
-    root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", ".git" },
+    root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml",
+                     "pengu.lock", ".pengufmt.toml", ".git" },
     lsp = {
       on_attach = function(client, bufnr)
         -- tus keymaps de LSP (gd, K, gr, ...)
@@ -68,13 +75,17 @@ Con vim-plug: >
     commands = {
       cwd = "cwd",      -- "project" | "buffer" | "cwd"
       run = { split = "botright", size = 15 },
+      watch = { split = "botright", size = 15 },
+      build = { args = nil },
+      check = { args = nil },
+      test = { args = nil },
+      fmt = { args = nil },
     },
     format_on_save = false,            -- true para formatear al guardar
     highlight = { treesitter = "auto", colors = {} },
     snippets = true,                   -- LuaSnip (si está instalado)
   }
 <
-
 También se respetan las variables globales:
   vim.g.pengus_bin_path     " ruta del binario (alternativa a bin_path)
 y la variable de entorno:
@@ -86,19 +97,41 @@ lspconfig se regeneran con la nueva configuración.
 ==============================================================================
 4. COMANDOS                                        *pengus-commands*
 
-  :PenguBuild [args...]    Ejecuta `pengu build [args...]` y muestra la salida
-                           en la quickfix si falla o hay avisos.
-  :PenguRun [args...]      Ejecuta `pengu run [args...]` en una terminal.
+Proyecto y mantenimiento:
+  :PenguInit <name>        Crea un proyecto nuevo (`pengu init`).
+  :PenguAdd <url>          Instala un módulo o binding externo (`pengu add`).
+  :PenguUpdate             Actualiza las dependencias (`pengu update`).
+  :PenguClean              Limpia build/ y las cachés (`pengu clean`).
+  :PenguGc                 Recoge los binarios de script en caché (`pengu gc`).
+  :PenguDoctor             Diagnóstico del toolchain (`pengu doctor`).
+  :PenguVersion            Muestra la versión del toolchain (`pengu -V`).
+
+Compilación, ejecución y diagnóstico:
+  :PenguBuild [args...]    Ejecuta `pengu build [args...]` (quickfix).
   :PenguCheck [args...]    Ejecuta `pengu check [args...]` (quickfix).
   :PenguTest [args...]     Ejecuta `pengu test [args...]` (quickfix).
-  :PenguFmt [args...]      Formatea el archivo actual con `pengu fmt`.
+  :PenguRun [script] [args...]
+                           Ejecuta `pengu run` en una terminal (modo proyecto
+                           o modo script).
+  :PenguWatch [script]     `pengu watch`: reejecuta al cambiar las fuentes.
+  :PenguTime [script]      `pengu time`: tiempos por fase.
+  :PenguEval <expr>        `pengu eval "<expr>"`: evalúa una expresión.
+  :PenguExpand [file]      Muestra el bundle.c generado en un split.
+
+Calidad y recursos:
+  :PenguFmt [args...]      Formatea el buffer con `pengu fmt --stdin`.
+  :PenguDoc [args...]      Genera la documentación Markdown (`pengu doc`).
+  :PenguBind [header]      Genera un binding .d.pengu (`pengu bind`).
+  :PenguAssets [--list]    Inspecciona o regenera los assets (`pengu assets`).
+  :PenguBench [args...]    Arranca el arnés de benchmarks (`pengu benchmark`).
+
+LSP:
   :PenguLspStart           Arranca el LSP en el buffer actual.
   :PenguLspRestart         Reinicia el servidor LSP.
   :PenguLspLog             Abre el log del LSP.
 
-El directorio de trabajo de build/check/run lo controla la opción
-commands.cwd (por defecto, el directorio actual de Neovim). Ver
-|pengus-configuration|.
+El directorio de trabajo de los comandos lo controla la opción commands.cwd
+(por defecto, el directorio actual de Neovim). Ver |pengus-configuration|.
 
 ==============================================================================
 5. LSP                                                    *pengus-lsp*
@@ -119,22 +152,71 @@ Sobrescritura del binario: >
 Para formatear cada archivo .pengu antes de guardar: >
   require("pengus").setup { format_on_save = true }
 <
-El formateo se hace sobre un archivo temporal con el contenido del buffer, por
-lo que es seguro con cambios sin guardar. Si necesitas argumentos extra: >
-  format_on_save = { args = { "--check" } }
+El formateo envía el contenido del buffer a `pengu fmt --stdin`, así que
+funciona con cambios sin guardar y nunca escribe en el archivo desde el
+formateador. Si necesitas argumentos extra: >
+  format_on_save = { args = { "--indent", "4" } }
 <
 Para desactivarlo: format_on_save = false.
 
 ==============================================================================
-7. FUNCIONES LUA                                      *pengus-api*
+7. SINTAXIS, SANGRÍA Y SNIPPETS                       *pengus-syntax*
+
+Sintaxis ~
+  syntax/pengus.vim cubre PenguScript 2.0.x. Con Neovim >= 0.10 y un parser
+  Treesitter `pengus` instalado, el plugin lo usa automáticamente
+  (highlight.treesitter = "auto"); el archivo de sintaxis queda como respaldo.
+
+Sangría ~
+  La convención oficial de PenguScript es de 4 espacios, nunca tabuladores
+  (`pengu fmt` es idempotente con `tab_size = 4`). indent/pengus.vim:
+
+    - abre un nivel tras cualquier línea que termina en `:`;
+    - alinea `else`, `else when`, `else ->`, `when ... ->` y `or:` con su
+      cadena;
+    - sangra las continuaciones de cadenas de métodos (`.eslabón`/`->eslabón`);
+    - deja el C de los bloques `antiquus` a columna 0.
+
+Comentarios ~
+  `#` es un comentario normal y `##` un comentario de documentación (lo usan
+  `pengu doc` y el hover del LSP).
+
+Snippets ~
+  El catálogo está en snippets/pengus.json, en formato VS Code, con cuerpos
+  indentados a 4 espacios. Lo consumen LuaSnip (cargador de VS Code, a través
+  del package.json del plugin), LazyVim, blink.cmp y mini.snippets. Los
+  prefijos incluyen: main, weave, weaveshardwhere, declare, antiquus, rune,
+  runederive, runecyclus, runepacked, omenpayload, concept, bind, enchanting,
+  enchantingshard, enchantingprim, let, var, const, static, setadd, ifmaybe,
+  judge, whenpayload, withblock, withshort, mapindent, callingof, chain,
+  banish, deferbanish, try, orblock, sigil, bytesof, transmute, sizeof, test,
+  whenchain, attrpacked, import, println, arca*, ffi* y los docstrings `##`.
+
+==============================================================================
+8. FUNCIONES LUA                                      *pengus-api*
 
   require("pengus").setup(opts)      Configura el plugin.
   require("pengus").config()         Configuración efectiva.
   require("pengus").build(args?)     Equivalente a :PenguBuild.
-  require("pengus").run(args?)       Equivalente a :PenguRun.
   require("pengus").check(args?)     Equivalente a :PenguCheck.
   require("pengus").test(args?)      Equivalente a :PenguTest.
+  require("pengus").run(args?)       Equivalente a :PenguRun.
+  require("pengus").watch(args?)     Equivalente a :PenguWatch.
+  require("pengus").time(args?)      Equivalente a :PenguTime.
+  require("pengus").eval(args?)      Equivalente a :PenguEval.
+  require("pengus").expand(args?)    Equivalente a :PenguExpand.
   require("pengus").format(args?)    Equivalente a :PenguFmt.
+  require("pengus").doc(args?)       Equivalente a :PenguDoc.
+  require("pengus").bind(args?)      Equivalente a :PenguBind.
+  require("pengus").assets(args?)    Equivalente a :PenguAssets.
+  require("pengus").benchmark(args?) Equivalente a :PenguBench.
+  require("pengus").init(args?)      Equivalente a :PenguInit.
+  require("pengus").add(args?)       Equivalente a :PenguAdd.
+  require("pengus").update(args?)    Equivalente a :PenguUpdate.
+  require("pengus").clean(args?)     Equivalente a :PenguClean.
+  require("pengus").gc(args?)        Equivalente a :PenguGc.
+  require("pengus").doctor(args?)    Equivalente a :PenguDoctor.
+  require("pengus").version()        Equivalente a :PenguVersion.
   require("pengus").restart()        Equivalente a :PenguLspRestart.
   require("pengus").open_log()       Equivalente a :PenguLspLog.
   require("pengus").lsp              Submódulo lsp (acceso perezoso).
@@ -143,7 +225,7 @@ Los comandos aceptan una lista de argumentos o varargs:
   require("pengus").run({ "main.pengu", "--verbose" })
 
 ==============================================================================
-8. LICENCIA                                        *pengus-license*
+9. LICENCIA                                        *pengus-license*
 
 MIT. Copyright (c) 2026 TuGatito. Ver el archivo LICENSE del repositorio.
 

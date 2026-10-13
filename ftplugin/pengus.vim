@@ -5,16 +5,23 @@ if exists("b:did_ftplugin")
 endif
 let b:did_ftplugin = 1
 
-" Comentarios: `#` para comentarios normales y `##` para documentación.
+" Comentarios: `#` normal y `##` documentación (`pengu doc`, hover del LSP).
 setlocal commentstring=#\ %s
 setlocal comments=:##,:#
 
-" Formato e indentación por defecto (la convención oficial y de `pengu fmt` es 2 espacios)
-setlocal shiftwidth=2
-setlocal softtabstop=2
+" Formato de texto: sin auto-wrap, con continuación de comentarios y `gq`.
+setlocal formatoptions-=t
+setlocal formatoptions+=croql
+
+" Convención oficial de PenguScript: 4 espacios, nunca tabuladores.
+" `.pengufmt.toml` usa `tab_size = 4`, `pengu fmt` es idempotente con esa
+" configuración y la guía de estilo la exige (§3.1, §15).
+setlocal shiftwidth=4
+setlocal softtabstop=4
+setlocal tabstop=4
 setlocal expandtab
 
-" Ayuda a gf / include para resolver archivos .pengu
+" Ayuda a `gf` para resolver módulos .pengu y archivos de binding .d.pengu.
 setlocal suffixesadd+=.pengu,.d.pengu
 
-let b:undo_ftplugin = "setlocal commentstring< comments< suffixesadd< shiftwidth< softtabstop< expandtab<"
+let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions< shiftwidth< softtabstop< tabstop< expandtab< suffixesadd<"
