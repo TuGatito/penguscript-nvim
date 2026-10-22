@@ -65,6 +65,8 @@ M.build = cmd("build")
 M.check = cmd("check")
 --- Ejecuta los tests (`pengu test`).
 M.test = cmd("test")
+--- Ejecuta los tests de forma continua ante cambios (`pengu test --watch`).
+M.test_watch = cmd("test_watch")
 --- Ejecuta el proyecto o un script en una terminal (`pengu run`).
 M.run = cmd("run")
 --- Reejecuta al cambiar fuentes (`pengu watch`).

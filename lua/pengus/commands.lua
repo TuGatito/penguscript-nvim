@@ -82,14 +82,56 @@ local function get_bin()
 end
 
 --------------------------------------------------------------------------------
--- Ventana quickfix
+-- Ventana quickfix (con análisis de diagnósticos del compilador pengu)
 --------------------------------------------------------------------------------
+
+--- Parsea una línea de salida de pengu para extraer archivo, línea, columna y mensaje.
+local function parse_qf_line(l)
+  if not l or l == "" then
+    return nil
+  end
+
+  -- Diagnóstico de PenguScript: "   /ruta/archivo.pengu:8:5 [E0005] Mensaje de error"
+  local file, lnum, col, code, msg = l:match("^%s*([^:\r\n]+):(%d+):(%d+)%s*%[([EW]%d+)%]%s*(.*)$")
+  if file and lnum and col then
+    local err_type = code and code:sub(1, 1) or "E"
+    local text = ("[%s] %s"):format(code or "ERR", msg or "")
+    return {
+      filename = file,
+      lnum = tonumber(lnum),
+      col = tonumber(col),
+      text = text,
+      type = err_type,
+    }
+  end
+
+  -- Error genérico de compilador C o toolchain: "archivo.c:8:5: error: Mensaje"
+  local file2, lnum2, col2, msg2 = l:match("^%s*([^:\r\n]+):(%d+):(%d+):?%s*(.*)$")
+  if file2 and lnum2 and col2 and tonumber(lnum2) and tonumber(col2) then
+    local err_type = "E"
+    if msg2:lower():match("^warn") then
+      err_type = "W"
+    end
+    return {
+      filename = file2,
+      lnum = tonumber(lnum2),
+      col = tonumber(col2),
+      text = msg2 ~= "" and msg2 or l,
+      type = err_type,
+    }
+  end
+
+  return { text = l }
+end
 
 local function qf_items(lines)
   local items = {}
   for _, l in ipairs(lines or {}) do
     if l ~= "" then
-      table.insert(items, { text = l })
+      local item = parse_qf_line(l)
+      if item then
+        table.insert(items, item)
+      end
     end
   end
   return items
@@ -196,6 +238,12 @@ local function run_in_terminal(title, cmd, dir, opts)
   local vertical = split == "vnew" or split == "vsplit" or split == "vertical"
   local position = (split == "topleft" or split == "leftabove") and "topleft" or "botright"
 
+  -- Limpiar buffer previo con el mismo título para evitar colisión de nombres E95
+  local existing = vim.fn.bufnr(title)
+  if existing ~= -1 and vim.api.nvim_buf_is_valid(existing) then
+    pcall(vim.api.nvim_buf_delete, existing, { force = true })
+  end
+
   vim.cmd(position .. (vertical and " vnew" or " new"))
   vim.cmd((vertical and "vertical resize " or "resize ") .. size)
 
@@ -248,11 +296,29 @@ function M.test(...)
   diag("test", "pengu test", ...)
 end
 
+--- `pengu test --watch`: ejecuta los tests de forma continua ante cambios
+function M.test_watch(...)
+  local c = cfg()
+  local bin = get_bin()
+  if not bin then
+    return
+  end
+  local topts = (c.commands and c.commands.test) or {}
+  local args = append(topts.args, normalize_args(...))
+  if not vim.tbl_contains(args, "--watch") then
+    table.insert(args, 1, "--watch")
+  end
+  local cmd = append({ bin, "test" }, args)
+  return run_in_terminal("pengu test --watch", cmd, work_dir(vim.api.nvim_get_current_buf()), topts)
+end
+
 function M.doc(...)
   action("doc", "pengu doc", ...)
 end
 
---- `pengu bind <header>`: muestra el binding `.d.pengu` generado en un split.
+--- `pengu bind [header]`: genera un binding `.d.pengu` desde una cabecera de C.
+-- Si se llama sin argumentos sobre un archivo `.h`, detecta automáticamente el buffer
+-- y abre el archivo `.d.pengu` generado en un split vertical.
 function M.bind(...)
   local bin = get_bin()
   if not bin then
@@ -260,11 +326,56 @@ function M.bind(...)
   end
   local args = append(default_args("bind"), normalize_args(...))
   if #args == 0 then
-    notify("Uso: :PenguBind <cabecera.h> [--output FILE]", vim.log.levels.WARN)
-    return
+    local cur_buf = vim.api.nvim_get_current_buf()
+    local path = util.buffer_path(cur_buf)
+    if path and (path:match("%.h$") or path:match("%.hpp$")) then
+      args = { path }
+    else
+      notify("Uso: :PenguBind [cabecera.h] [--prefix PREFIX] [--output FILE]", vim.log.levels.WARN)
+      return
+    end
   end
+
+  local header = args[1]
+  local dir = work_dir(vim.api.nvim_get_current_buf())
   local cmd = append({ bin, "bind" }, args)
-  return run_to_scratch("pengu bind", cmd, work_dir(vim.api.nvim_get_current_buf()), "pengus")
+  notify(("Generando binding para `%s`…"):format(vim.fn.fnamemodify(header, ":t")))
+
+  local jid = util.job(cmd, {
+    cwd = dir,
+    on_exit = function(lines, code)
+      if code ~= 0 then
+        local items = qf_items(lines)
+        set_qf("pengu bind", items)
+        open_qf_if_any(items)
+        notify(("`pengu bind` falló (código %d). Salida en la quickfix."):format(code), vim.log.levels.ERROR)
+        return
+      end
+
+      -- Localizar el archivo generado
+      local out_file = nil
+      for i, arg in ipairs(args) do
+        if (arg == "--output" or arg == "-o") and args[i + 1] then
+          out_file = args[i + 1]
+          break
+        end
+      end
+      if not out_file then
+        out_file = header:gsub("%.h[pp]?$", "") .. ".d.pengu"
+      end
+
+      if vim.fn.filereadable(out_file) == 1 then
+        notify(("Binding generado correctamente: `%s`"):format(vim.fn.fnamemodify(out_file, ":t")))
+        vim.cmd("botright vsplit " .. vim.fn.fnameescape(out_file))
+      else
+        notify("`pengu bind` completado con éxito.")
+      end
+    end,
+    on_error = function()
+      notify("No se pudo ejecutar `pengu bind`.", vim.log.levels.ERROR)
+    end,
+  })
+  return jid
 end
 
 function M.assets(...)
@@ -453,16 +564,44 @@ local function fmt_via_stdin(bin, args, lines, timeout_ms)
   return stdout
 end
 
---- Sustituye el contenido de `bufnr` conservando la vista cuando está visible.
-local function replace_buffer(bufnr, lines)
+--- Sustituye únicamente el rango modificado en `bufnr` conservando marcas,
+-- folds y la vista. Es especialmente importante en archivos de miles de líneas
+-- para evitar re-renderizados costosos.
+local function replace_buffer(bufnr, new_lines)
+  local old_lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  if vim.deep_equal(old_lines, new_lines) then
+    return true
+  end
+
   local win = vim.api.nvim_get_current_win()
   local shown = vim.api.nvim_win_get_buf(win) == bufnr
   local view = shown and vim.fn.winsaveview() or nil
+
+  local start_idx = 1
+  local old_len = #old_lines
+  local new_len = #new_lines
+  while start_idx <= old_len and start_idx <= new_len and old_lines[start_idx] == new_lines[start_idx] do
+    start_idx = start_idx + 1
+  end
+
+  local old_end = old_len
+  local new_end = new_len
+  while old_end >= start_idx and new_end >= start_idx and old_lines[old_end] == new_lines[new_end] do
+    old_end = old_end - 1
+    new_end = new_end - 1
+  end
+
+  local replacement = {}
+  for i = start_idx, new_end do
+    table.insert(replacement, new_lines[i])
+  end
+
   local ok = pcall(vim.api.nvim_buf_call, bufnr, function()
     pcall(vim.cmd, "silent undojoin")
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    vim.api.nvim_buf_set_lines(bufnr, start_idx - 1, old_end, false, replacement)
     vim.bo[bufnr].modified = true
   end)
+
   if ok and view then
     vim.fn.winrestview(view)
   end
@@ -529,11 +668,7 @@ function M._format_on_save(bufnr)
   if vim.deep_equal(formatted, lines) then
     return
   end
-  pcall(vim.api.nvim_buf_call, bufnr, function()
-    pcall(vim.cmd, "silent undojoin")
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, formatted)
-    vim.bo[bufnr].modified = true -- el guardado en curso escribirá el contenido nuevo
-  end)
+  replace_buffer(bufnr, formatted)
   notify("Formateado con `pengu fmt` antes de guardar.")
 end
 

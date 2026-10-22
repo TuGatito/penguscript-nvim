@@ -91,7 +91,7 @@ function! s:InTripleString(lnum)
       return 0
     endif
   endif
-  return s:InTripleStringWindow(a:lnum, 200)
+  return s:InTripleStringWindow(a:lnum, 60)
 endfunction
 
 " Aproximación sin sintaxis: paridad de `"""` en las últimas `budget` líneas.
@@ -131,7 +131,7 @@ endfunction
 
 " Indentación de la cadena a la que pertenece una rama (`when ... ->`,
 " `else ...`): la de su hermano `when`/`else` más cercano o, si no lo hay, la
-" del abridor de bloque con menor indentación.
+" del abridor de bloque con menor indentación (acotado por budget para archivos largos).
 function! s:ChainIndent(prevlnum)
   " Primera rama justo después del abridor (`judge x:`, `when ...:`, `if ...:`).
   if s:Clean(getline(a:prevlnum)) =~# ':\s*$'
@@ -139,7 +139,9 @@ function! s:ChainIndent(prevlnum)
   endif
   let l:base = indent(a:prevlnum)
   let l:lnum = a:prevlnum
-  while l:lnum > 0
+  let l:budget = 80
+  while l:lnum > 0 && l:budget > 0
+    let l:budget -= 1
     let l:text = substitute(s:Clean(getline(l:lnum)), '^\s*', '', '')
     if l:text =~# '^\%(when\|else\)\>'
       return indent(l:lnum)
@@ -149,14 +151,17 @@ function! s:ChainIndent(prevlnum)
     endif
     let l:lnum = prevnonblank(l:lnum - 1)
   endwhile
-  return 0
+  return l:base
 endfunction
 
 " Indentación de la línea que abre una cadena de métodos: se retrocede por las
-" líneas de continuación (las que empiezan por `.` o `->`) hasta el receptor.
+" líneas de continuación (las que empiezan por `.` o `->`) hasta el receptor
+" (acotado por budget para evitar bloqueos en buffers grandes).
 function! s:ChainBaseIndent(prevlnum)
   let l:lnum = a:prevlnum
-  while l:lnum > 0
+  let l:budget = 80
+  while l:lnum > 0 && l:budget > 0
+    let l:budget -= 1
     let l:text = substitute(s:Clean(getline(l:lnum)), '^\s*', '', '')
     if l:text !~# '^\%(\.\|->\)'
       return indent(l:lnum)

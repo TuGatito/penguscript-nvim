@@ -24,6 +24,9 @@ command! -nargs=* -complete=file PenguCheck lua require("pengus.commands").check
 " Ejecuta los tests del proyecto (pengu test [args...]) en la quickfix
 command! -nargs=* -complete=file PenguTest lua require("pengus.commands").test(<f-args>)
 
+" Ejecuta los tests de forma continua ante cambios (pengu test --watch) en una terminal
+command! -nargs=* -complete=file PenguTestWatch lua require("pengus.commands").test_watch(<f-args>)
+
 " Reejecuta al cambiar cualquier fuente (pengu watch [script]) en una terminal
 command! -nargs=* -complete=file PenguWatch lua require("pengus.commands").watch(<f-args>)
 

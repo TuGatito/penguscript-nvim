@@ -24,4 +24,8 @@ setlocal expandtab
 " Ayuda a `gf` para resolver módulos .pengu y archivos de binding .d.pengu.
 setlocal suffixesadd+=.pengu,.d.pengu
 
-let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions< shiftwidth< softtabstop< tabstop< expandtab< suffixesadd<"
+" Compilación nativa con :make y parseo de diagnósticos de PenguScript
+setlocal makeprg=pengu\ build
+setlocal errorformat=\ \ \ %f:%l:%c\ [%t%n]\ %m,%f:%l:%c:\ %m,%-G%.%#
+
+let b:undo_ftplugin = "setlocal commentstring< comments< formatoptions< shiftwidth< softtabstop< tabstop< expandtab< suffixesadd< makeprg< errorformat<"

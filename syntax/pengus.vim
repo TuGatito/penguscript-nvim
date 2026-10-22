@@ -16,9 +16,11 @@ if exists("b:current_syntax")
   finish
 endif
 
-" El lenguaje tiene cuerpos de C literales dentro de cadenas triples y cadenas
-" multilínea, así que sincronizamos hacia atrás una cantidad generosa de líneas.
-syn sync minlines=200
+" Sincronización optimizada: ancla en declaraciones de nivel superior para no
+" tener que escanear miles de líneas hacia atrás en buffers grandes.
+syn sync match pengusSync grouphere NONE "^\%(weave\|rune\|echo\|omen\|concept\|bind\|alias\|seal\|enchanting\|antiquus\)\>"
+syn sync minlines=40
+syn sync maxlines=300
 
 " ---------------------------------------------------------------------------
 " Atributos de declaración: @noreturn, @export("..."), @packed, @align(N)
@@ -52,10 +54,15 @@ syn keyword pengusStatement   calling with into as is many of
                             \ some ord chr bytes essence sigil transmute size
                             \ try defined not and or lambda
 
-" `do:` (bloque de valor) y `unsafe:` (opt-out de comprobaciones de límites) son
-" sentencias que solo se reconocen cuando van seguidas de dos puntos.
+" `do:` (bloque de valor), `unsafe:` (opt-out de límites) y `or:` (manejador)
+" son sentencias que solo se reconocen cuando van seguidas de dos puntos.
 syn match   pengusStatement   "\<do\ze\s*:"
 syn match   pengusStatement   "\<unsafe\ze\s*:"
+syn match   pengusStatement   "\<or\ze\s*:"
+
+" Manejo idiomático de fallbacks y retornos tempranos
+syn match   pengusOperator    "\<or\s\+else\>"
+syn match   pengusStatement   "\<or\s\+return\>"
 
 " ---------------------------------------------------------------------------
 " Conceptos integrados (nombres reservados del ámbito global, no palabras clave)
@@ -73,8 +80,9 @@ syn keyword pengusSpecial     self
 " Variables de comptime (evaluadas bajo `when`).
 syn keyword pengusCompileConst main debug os arch compiler
 
-" `is present` / `is not present` / `is true` / `is false`
+" `is present` / `is not present` / `is true` / `is false` / `is null` / `is none`
 syn keyword pengusWordTest    present
+syn match   pengusWordTest    "\<is\s\+\%(not\s\+\)\?\%(present\|true\|false\|null\|none\)\>"
 
 " ---------------------------------------------------------------------------
 " Tipos primitivos, alias C y contenedores
@@ -113,17 +121,18 @@ syn match   pengusFunction    "\<antiquus\s\+\zs[A-Za-z_][A-Za-z0-9_]*\>"
 syn match   pengusTypeDef     "\<\%(rune\|echo\|omen\|concept\|bind\|alias\|seal\)\s\+\zs[A-Za-z_][A-Za-z0-9_]*\>"
 " `bind Tipo with Concepto:`
 syn match   pengusTypeDef     "\<bind\s\+[A-Za-z_][A-Za-z0-9_]*\s\+with\s\+\zs[A-Za-z_][A-Za-z0-9_]*\>"
-" Nombre de función/método en una llamada. Se usa un lookbehind para que el
-" resaltado empiece en el nombre: `calling` ya lo consume la palabra clave y el
-" motor de sintaxis no vuelve a examinar el prefijo.
-syn match   pengusFunctionCall "\(\<calling\s\+\)\@<=\<[A-Za-z_][A-Za-z0-9_]*\>"
+" Nombre de función/método en una llamada (\zs evita lookbehinds costosos)
+syn match   pengusFunctionCall "\<calling\s\+\zs[A-Za-z_][A-Za-z0-9_]*\>"
+
+" Símbolos privados (prefijo `_`: convención y regla estricta de PenguScript)
+syn match   pengusPrivate     "\<_[A-Za-z0-9_]*\>"
 
 " ---------------------------------------------------------------------------
 " Módulos, directivas e inclusión
 " ---------------------------------------------------------------------------
 syn keyword pengusInclude     import include link insignia
 
-" Módulos de la biblioteca estándar (27 módulos puros) + `arca`.
+" Módulos de la biblioteca estándar (40 módulos completos) + `arca`.
 " Tras `import std.spark` el código usa la forma corta (`spark.println`), así que
 " se resaltan por nombre. Los módulos satélite instalados con `pengu add` se
 " resaltan en la propia sentencia `import`.
@@ -132,6 +141,8 @@ syn keyword pengusModule      spark scrolls oracle compass archivum cipher
                             \ chronicle lot rites whisper ward trial tally atlas
                             \ coven filum fractio integrum littera logica numerus
                             \ loom memoria invoke ffi ledger arithmancy arca
+                            \ builder json jsonrpc sourcemap diagnostic bitset
+                            \ arena web petitio compressus lingua regulus functor
 syn match   pengusModule      "\<import\s\+\zs[A-Za-z_][A-Za-z0-9_.]*"
 
 " Funciones integradas del compilador
@@ -259,5 +270,6 @@ hi def link pengusPostfix              Operator
 hi def link pengusField                Identifier
 hi def link pengusArrowField           Identifier
 hi def link pengusDelimiter            Delimiter
+hi def link pengusPrivate              Special
 
 let b:current_syntax = "pengus"

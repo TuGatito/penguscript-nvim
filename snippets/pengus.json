@@ -1289,5 +1289,105 @@
       "## ${5:No asigna memoria. No hay nada que liberar.}"
     ],
     "description": "Docstring obligatorio de un `antiquus` público"
+  },
+  "Parsear JSON (std.json)": {
+    "prefix": "jsonparse",
+    "body": [
+      "var ${1:val} as JsonValue is calling json.parse with ${2:source}",
+      "defer banish ${1:val}"
+    ],
+    "description": "Parsear texto JSON estricto con std.json"
+  },
+  "Serializar JSON (std.json)": {
+    "prefix": "jsonstr",
+    "body": [
+      "let ${1:json_text} is calling json.stringify with ${2:valor}"
+    ],
+    "description": "Serializar a string JSON con std.json"
+  },
+  "Petición HTTP (std.petitio)": {
+    "prefix": "httpreq",
+    "body": [
+      "var req as Request is calling Request.new with \"${1:https://api.example.com}\"",
+      "defer banish req",
+      "var res as result of Response to HttpError is calling req.send",
+      "defer banish res",
+      "judge res:",
+      "    when Ok as r ->",
+      "        $0",
+      "    when Err as e ->",
+      "        calling whisper.error with e->message"
+    ],
+    "description": "Petición HTTP con std.petitio y manejo de memoria"
+  },
+  "Lanzar hilo (std.filum)": {
+    "prefix": "spawn",
+    "body": [
+      "calling filum.spawn with lambda into ${1:llamada}"
+    ],
+    "description": "Lanzar hilo concurrente con std.filum"
+  },
+  "Canal tipado (std.filum)": {
+    "prefix": "channel",
+    "body": [
+      "var ${1:chan} as Channel of ${2:int} is calling Channel.new with ${3:16}",
+      "defer banish ${1:chan}"
+    ],
+    "description": "Crear canal tipado concurrente con std.filum"
+  },
+  "StringBuilder (std.builder)": {
+    "prefix": "builder",
+    "body": [
+      "var ${1:sb} as StringBuilder is calling StringBuilder.new",
+      "defer banish ${1:sb}",
+      "calling ${1:sb}.append with \"${2:texto}\"",
+      "let ${3:resultado} is calling ${1:sb}.finish"
+    ],
+    "description": "Acumulador de strings O(1) amortizado con std.builder"
+  },
+  "Bolsa de diagnósticos (std.diagnostic)": {
+    "prefix": "diagbag",
+    "body": [
+      "var ${1:bag} as DiagnosticBag is calling DiagnosticBag.new",
+      "defer banish ${1:bag}",
+      "$0"
+    ],
+    "description": "Contenedor estructurado de diagnósticos con std.diagnostic"
+  },
+  "Aserción de igualdad para tests (std.trial)": {
+    "prefix": "asserteq",
+    "body": [
+      "calling trial.assert_eq shard ${1:int} with ${2:actual}, ${3:esperado}"
+    ],
+    "description": "Aserción de igualdad para tests con std.trial"
+  },
+  "Aserción booleana para tests (std.trial)": {
+    "prefix": "asserttrue",
+    "body": [
+      "calling trial.assert_true with ${1:condicion}, \"${2:mensaje}\""
+    ],
+    "description": "Aserción booleana para tests con std.trial"
+  },
+  "Desempaquetar maybe con contexto (if v as T is m)": {
+    "prefix": "ifas",
+    "body": [
+      "if ${1:v} as ${2:Tipo} is ${3:maybe_val}:",
+      "    $0"
+    ],
+    "description": "Desempaque idiomático Pengunic de maybe (§4.8)"
+  },
+  "Declaración inmutable con fallback (or else)": {
+    "prefix": "letelse",
+    "body": [
+      "let ${1:x} is ${2:expr} or else ${3:fallback}"
+    ],
+    "description": "Declaración let inmutable con fallback (or else)"
+  },
+  "Declaración con retorno temprano (or return)": {
+    "prefix": "letret",
+    "body": [
+      "let ${1:x} is ${2:expr} or return ${3:error_val}"
+    ],
+    "description": "Declaración con salida temprana ante fallo (or return)"
   }
 }

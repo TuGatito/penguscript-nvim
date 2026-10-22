@@ -52,7 +52,8 @@ function M.find_root(bufnr)
     -- Sin marcadores: usamos el directorio del propio archivo.
     return vim.fn.fnamemodify(path, ":p:h")
   end
-  local cwd = vim.loop.cwd() or vim.fn.getcwd()
+  local uv = vim.uv or vim.loop
+  local cwd = uv.cwd() or vim.fn.getcwd()
   local root = M.root_for(cwd .. "/__pengus__.pengu")
   return root or cwd
 end
@@ -99,9 +100,15 @@ local function make_capabilities(user_caps)
     return user_caps
   end
   local caps = vim.lsp.protocol.make_client_capabilities()
-  local ok, cmp = pcall(require, "cmp_nvim_lsp")
-  if ok and type(cmp.default_capabilities) == "function" then
-    caps = cmp.default_capabilities()
+  -- Soporte prioritario para blink.cmp (estándar moderno en LazyVim)
+  local ok_blink, blink = pcall(require, "blink.cmp")
+  if ok_blink and type(blink.get_lsp_capabilities) == "function" then
+    return blink.get_lsp_capabilities(caps)
+  end
+  -- Respaldo para cmp-nvim-lsp
+  local ok_cmp, cmp = pcall(require, "cmp_nvim_lsp")
+  if ok_cmp and type(cmp.default_capabilities) == "function" then
+    caps = cmp.default_capabilities(caps)
   end
   return caps
 end
@@ -119,7 +126,7 @@ local function build_config(bufnr, root)
     cmd_cwd = root,
     capabilities = make_capabilities(c.lsp.capabilities),
     settings = c.lsp.settings or {},
-    flags = c.lsp.flags or { debounce_text_changes = 150 },
+    flags = c.lsp.flags or (vim.fn.has("nvim-0.10") == 1 and {} or { debounce_text_changes = 150 }),
     env = c.lsp.env,
     handlers = c.lsp.handlers,
     on_attach = function(client, b)
@@ -246,7 +253,7 @@ function M.register_lspconfig()
         return M.root_for(fname)
       end,
       settings = c.lsp.settings or {},
-      flags = c.lsp.flags or { debounce_text_changes = 150 },
+      flags = c.lsp.flags or (vim.fn.has("nvim-0.10") == 1 and {} or { debounce_text_changes = 150 }),
     },
     docs = {
       description = "Servidor LSP de PenguScript (`pengu lsp --stdio`). "

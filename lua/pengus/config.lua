@@ -30,6 +30,7 @@ local defaults = {
     "pengu.yaml",
     "pengu.toml",
     "Pengu.toml",
+    "build.pengu",
     "pengu.lock",
     ".pengufmt.toml",
     ".git",
@@ -87,8 +88,8 @@ local defaults = {
   --- Formatea al guardar (opcional). `false` desactiva; `true` o una tabla
   -- `{ args = { ... } }` lo activa (los args se añaden tras `pengu fmt`).
   format_on_save = false,
-  --- Timeout (ms) para el formateo síncrono al guardar.
-  format_on_save_timeout = 30000,
+  --- Timeout (ms) para el formateo síncrono al guardar (máximo 5s para evitar bloqueos).
+  format_on_save_timeout = 5000,
 
   highlight = {
     --- Uso de Treesitter cuando exista un parser `pengus`:

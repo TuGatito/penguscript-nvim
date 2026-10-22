@@ -21,19 +21,19 @@ penguscript-nvim proporciona soporte completo para PenguScript 2.0.x
 
   - Servidor LSP `pengu lsp --stdio`, arrancado automáticamente y con
     detección de la raíz del proyecto (pengu.yaml, pengu.toml, Pengu.toml,
-    pengu.lock, .pengufmt.toml, .git).
+    build.pengu, pengu.lock, .pengufmt.toml, .git).
   - Resaltado de sintaxis: Treesitter si hay parser `pengus` (Neovim >= 0.10)
     con respaldo clásico en syntax/pengus.vim, con cobertura de la versión
-    2.0.x: `antiquus`, `unsafe:`, `do:`, palabras clave blandas
-    (`frozen`, `inline`, `ritual`), los 12 conceptos integrados, todos los
-    alias de primitivos, los 27 módulos de `std.*` más `arca`, atributos
+    2.0.x: `antiquus`, `unsafe:`, `do:`, `or:`, palabras clave blandas
+    (`frozen`, `inline`, `ritual`), los conceptos integrados, todos los
+    alias de primitivos, los 40 módulos de `std.*` más `arca`, atributos
     (`@noreturn`, `@export`, `@deprecated`, `@inline`, `@cold`, `@packed`,
     `@align`) y operadores.
   - Sangría automática de 4 espacios consciente de la sintaxis
-    (indent/pengus.vim), incluidos los cuerpos de C de `antiquus`.
+    (indent/pengus.vim), con búsqueda acotada para buffers grandes.
   - Comandos para todo el toolchain `pengu`: compilación, ejecución, tests,
-    formato, documentación, bindings, assets y mantenimiento del proyecto.
-  - Más de 150 snippets en formato VS Code (snippets/pengus.json), válidos
+    formato, documentación, bindings C (.h -> .d.pengu), assets y mantenimiento.
+  - Más de 170 snippets en formato VS Code (snippets/pengus.json), válidos
     para LuaSnip, LazyVim, blink.cmp y mini.snippets.
 
 Requiere el binario `pengu` en el $PATH (o configurar su ruta). No depende de
@@ -108,8 +108,10 @@ Proyecto y mantenimiento:
 
 Compilación, ejecución y diagnóstico:
   :PenguBuild [args...]    Ejecuta `pengu build [args...]` (quickfix).
-  :PenguCheck [args...]    Ejecuta `pengu check [args...]` (quickfix).
-  :PenguTest [args...]     Ejecuta `pengu test [args...]` (quickfix).
+  :PenguCheck [args...]    Ejecuta `pengu check [args...]` (quickfix navegable).
+  :PenguTest [args...]     Ejecuta `pengu test [args...]` (quickfix navegable).
+  :PenguTestWatch [args...]
+                           Ejecuta `pengu test --watch` en terminal (tests continuos).
   :PenguRun [script] [args...]
                            Ejecuta `pengu run` en una terminal (modo proyecto
                            o modo script).
@@ -119,9 +121,10 @@ Compilación, ejecución y diagnóstico:
   :PenguExpand [file]      Muestra el bundle.c generado en un split.
 
 Calidad y recursos:
-  :PenguFmt [args...]      Formatea el buffer con `pengu fmt --stdin`.
+  :PenguFmt [args...]      Formatea el buffer con `pengu fmt --stdin` eficientemente.
   :PenguDoc [args...]      Genera la documentación Markdown (`pengu doc`).
-  :PenguBind [header]      Genera un binding .d.pengu (`pengu bind`).
+  :PenguBind [header]      Genera un binding .d.pengu (`pengu bind`). En cabeceras
+                           .h auto-detecta el buffer activo y abre el resultado.
   :PenguAssets [--list]    Inspecciona o regenera los assets (`pengu assets`).
   :PenguBench [args...]    Arranca el arnés de benchmarks (`pengu benchmark`).
 

@@ -85,6 +85,72 @@ return {
 }
 ```
 
+### LazyVim
+
+Si usas [LazyVim](https://lazyvim.org), crea `~/.config/nvim/lua/plugins/pengus.lua`:
+
+```lua
+return {
+  -- Plugin PenguScript
+  {
+    "TuGatito/penguscript-nvim",
+    ft = { "pengus", "c", "cpp" },
+    opts = {
+      format_on_save = false, -- En LazyVim se delega a conform.nvim
+    },
+  },
+
+  -- Servidor LSP mediante nvim-lspconfig
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        pengus = {
+          cmd = { "pengu", "lsp", "--stdio" },
+          filetypes = { "pengus" },
+        },
+      },
+    },
+  },
+
+  -- Formateo automático con conform.nvim
+  {
+    "stevearc/conform.nvim",
+    optional = true,
+    opts = {
+      formatters_by_ft = {
+        pengus = { "pengu_fmt" },
+      },
+      formatters = {
+        pengu_fmt = {
+          command = "pengu",
+          args = { "fmt", "--stdin" },
+          stdin = true,
+        },
+      },
+    },
+  },
+
+  -- Atajos contextuales con which-key
+  {
+    "folke/which-key.nvim",
+    optional = true,
+    opts = {
+      spec = {
+        { "<leader>cp", group = "PenguScript", icon = "🐧" },
+        { "<leader>cpb", "<cmd>PenguBuild<cr>", desc = "Compilar (build)" },
+        { "<leader>cpr", "<cmd>PenguRun<cr>", desc = "Ejecutar (run)" },
+        { "<leader>cpt", "<cmd>PenguTest<cr>", desc = "Tests" },
+        { "<leader>cpw", "<cmd>PenguTestWatch<cr>", desc = "Tests continuos (watch)" },
+        { "<leader>cpc", "<cmd>PenguCheck<cr>", desc = "Comprobar tipos (check)" },
+        { "<leader>cpB", "<cmd>PenguBind<cr>", desc = "Generar Binding C (.h)" },
+        { "<leader>cpe", "<cmd>PenguExpand<cr>", desc = "Expandir a C (expand)" },
+      },
+    },
+  },
+}
+```
+
 ### Packer.nvim
 
 ```lua
@@ -149,7 +215,7 @@ require("pengus").setup {
   register_lspconfig = true,
 
   -- Marcadores para detectar la raíz del proyecto (root_pattern).
-  root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", "pengu.lock", ".pengufmt.toml", ".git" },
+  root_markers = { "pengu.yaml", "pengu.toml", "Pengu.toml", "build.pengu", "pengu.lock", ".pengufmt.toml", ".git" },
 
   lsp = {
     name = "pengus",
@@ -185,7 +251,7 @@ require("pengus").setup {
 
   -- Formatea con `pengu fmt --stdin` al guardar. true, false o { args = {...} }.
   format_on_save = false,
-  format_on_save_timeout = 30000, -- ms
+  format_on_save_timeout = 5000, -- ms (máximo para evitar bloqueos)
 
   highlight = {
     treesitter = "auto",  -- true | false | "auto" (usa el parser si existe)
@@ -223,15 +289,16 @@ vim.g.pengus_bin_path = "C:/tools/pengu.exe"
 | ------- | ----------- |
 | `:PenguBuild [args...]` | `pengu build [args...]`; la salida va a la quickfix. |
 | `:PenguRun [script] [args...]` | `pengu run` en una terminal (modo proyecto o script). |
-| `:PenguCheck [args...]` | `pengu check [args...]`; resultado en la quickfix. |
-| `:PenguTest [args...]` | `pengu test [args...]`; resultado en la quickfix. |
+| `:PenguCheck [args...]` | `pengu check [args...]`; diagnósticos navegables en quickfix. |
+| `:PenguTest [args...]` | `pengu test [args...]`; resultado navegable en quickfix. |
+| `:PenguTestWatch [args...]` | `pengu test --watch`; ejecuta tests de forma continua ante cambios. |
 | `:PenguWatch [script]` | `pengu watch`: recompila y reejecuta al cambiar fuentes. |
 | `:PenguTime [script]` | `pengu time`: tiempos por fase (imports, check, codegen, C, ejecución). |
 | `:PenguEval <expr>` | `pengu eval "<expr>"`: evalúa una expresión y la notifica. |
 | `:PenguExpand [file]` | `pengu expand`: muestra el `bundle.c` generado en un split. |
-| `:PenguFmt [args...]` | Formatea el buffer con `pengu fmt --stdin`. |
+| `:PenguFmt [args...]` | Formatea el buffer con `pengu fmt --stdin` de forma eficiente. |
 | `:PenguDoc [args...]` | `pengu doc`: genera la documentación Markdown del proyecto. |
-| `:PenguBind [header]` | `pengu bind`: genera un binding `.d.pengu` desde cabeceras de C. |
+| `:PenguBind [header]` | `pengu bind`: genera `.d.pengu` desde cabeceras C (auto-detecta `.h` activo y abre split). |
 | `:PenguAssets [--list]` | `pengu assets`: inspecciona o regenera los assets embebidos. |
 | `:PenguBench [args...]` | `pengu benchmark`: arnés de benchmarks del proyecto. |
 | `:PenguInit <name>` | `pengu init`: crea un proyecto nuevo. |
