@@ -1,8 +1,372 @@
 # 🐧 penguscript-nvim
 
-[![Licencia: MIT](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Neovim](https://img.shields.io/badge/Neovim-0.8+-green.svg)](https://neovim.io)
 [![PenguScript](https://img.shields.io/badge/PenguScript-2.16+-orange.svg)](https://github.com/TuGatito/PenguScript)
+
+🌐 **Language / Idioma:** [🇬🇧 English](#-english) • [🇪🇸 Español](#-español)
+
+---
+
+<a id="english"></a><a id="-english"></a>
+## 🇬🇧 English
+
+[🇪🇸 Switch to Spanish version / Cambiar a la versión en español](#-español)
+
+**Official, first-class PenguScript support for Neovim and LazyVim** — Integrated LSP, navigable Quickfix diagnostics, filetype detection, comprehensive syntax highlighting, bounded indentation engine optimized for large files, `:Pengu*` commands, and an idiomatic Pengunic snippet catalog.
+
+Lightweight, zero mandatory third-party dependencies, and fully compatible with Neovim **0.8+** across Linux, macOS, and Windows.
+
+> [!NOTE]
+> Tailored for the **PenguScript 2.0+** language specification and toolchain (covering `LANGUAGE_Spanish.md` and the official Pengunic Style Guide).
+
+---
+
+### ✨ Features
+
+- 🧠 **Automatic & Intelligent Language Server (LSP)**:
+  - Spawns `pengu lsp --stdio` seamlessly upon opening `.pengu` or `.d.pengu` files.
+  - Accurate project root detection (`root_pattern`): `pengu.yaml`, `pengu.toml`, `Pengu.toml`, `build.pengu`, `pengu.lock`, `.pengufmt.toml`, and `.git`.
+  - Priority completion capabilities for **`blink.cmp`** (modern LazyVim default) and **`cmp-nvim-lsp`**.
+  - Automatic registration in `nvim-lspconfig` for `:LspInfo` integration.
+- 🚨 **Navigable Quickfix for Compilation and Tests**:
+  - Automatically parses PenguScript diagnostics (`file:line:column [E0000] message`).
+  - Pressing `<Enter>`, `:cnext`, or `:cprev` jumps directly to the exact file, line, and column.
+  - Built-in `makeprg=pengu\ build` and native `errorformat` in `pengus` buffers.
+- ⚡ **Extreme Performance on Large Files**:
+  - As PenguScript compiles to C, source and generated files can span tens of thousands of lines.
+  - **Bounded Indentation**: Search loops back-guarded with a strict budget to prevent keystroke lag on `<CR>`.
+  - **Optimized Syntax**: Synchronisation anchored to top-level declarations rather than expensive backward regex backtracking.
+  - **Non-destructive Formatting**: Buffer updates via slice diffs (only touching modified ranges) to preserve folds, cursor marks, and undo history.
+- 🎨 **Complete Syntax Highlighting** (`syntax/pengus.vim`):
+  - Full coverage of all **40 standard library modules** (`spark`, `json`, `petitio`, `filum`, `builder`, `compressus`, `lingua`, `regulus`, `sourcemap`, etc.) plus `arca`.
+  - Keywords and block statements: `antiquus`, `unsafe:`, `do:`, `or:`, `many`, `shard`, `where`.
+  - Soft keywords (`frozen`, `inline`, `ritual`) and built-in concepts.
+  - Idiomatic expressions: `or else`, `or return`, `is present`, `is not present`, `not in`, and type conversions with `to`.
+  - Visual distinction for private identifiers starting with an underscore (`_private`).
+  - Automatic **Treesitter** highlighting when a parser is detected (Neovim $\ge$ 0.10).
+- 🪄 **Contextual C Binding Generation** (`:PenguBind`):
+  - Running `:PenguBind` while editing a C header (`.h` or `.hpp`) automatically detects the buffer and opens the generated `.d.pengu` file in a vertical split.
+- 🏃 **Interactive Execution and Testing**:
+  - `:PenguRun` in an integrated terminal with automatic buffer reuse (no stale terminal leaks).
+  - `:PenguTest` with Quickfix results and `:PenguTestWatch` for continuous test execution on file changes.
+- ✂️ **173 Idiomatic Pengunic Snippets** (`snippets/pengus.json`):
+  - Standard VS Code format; compatible with LuaSnip, `blink.cmp`, LazyVim, and `vim.snippet`.
+  - Covers standard modules (`std.json`, `std.petitio`, `std.filum`, `std.builder`, `std.trial`) and Pengunic patterns (`if v as T is m:`, immutable `let`, `with:` builders).
+
+---
+
+### 📦 Requirements
+
+- **Neovim** $\ge$ 0.8 (0.10+ recommended for native Treesitter).
+- The [`pengu`](https://github.com/TuGatito/penguscript) executable in your `$PATH` (or configured via `bin_path`).
+
+---
+
+### 🚀 Installation
+
+Repository URL:  
+`https://github.com/TuGatito/penguscript-nvim`
+
+#### 💤 LazyVim
+
+Add or edit `~/.config/nvim/lua/plugins/pengus.lua`:
+
+```lua
+return {
+  -- 1. PenguScript core plugin
+  {
+    "TuGatito/penguscript-nvim",
+    ft = { "pengus", "c", "cpp" },
+    opts = {
+      format_on_save = false, -- In LazyVim formatting is delegated to conform.nvim
+    },
+  },
+
+  -- 2. Language Server integration (nvim-lspconfig)
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        pengus = {
+          cmd = { "pengu", "lsp", "--stdio" },
+          filetypes = { "pengus" },
+        },
+      },
+    },
+  },
+
+  -- 3. Asynchronous formatting via conform.nvim (<leader>cf or format on save)
+  {
+    "stevearc/conform.nvim",
+    optional = true,
+    opts = {
+      formatters_by_ft = {
+        pengus = { "pengu_fmt" },
+      },
+      formatters = {
+        pengu_fmt = {
+          command = "pengu",
+          args = { "fmt", "--stdin" },
+          stdin = true,
+        },
+      },
+    },
+  },
+
+  -- 4. Keymaps with Which-Key under <leader>cp
+  {
+    "folke/which-key.nvim",
+    optional = true,
+    opts = {
+      spec = {
+        { "<leader>cp", group = "PenguScript", icon = "🐧" },
+        { "<leader>cpb", "<cmd>PenguBuild<cr>", desc = "Build project" },
+        { "<leader>cpr", "<cmd>PenguRun<cr>", desc = "Run target/script" },
+        { "<leader>cpt", "<cmd>PenguTest<cr>", desc = "Run unit tests" },
+        { "<leader>cpw", "<cmd>PenguTestWatch<cr>", desc = "Continuous tests (watch)" },
+        { "<leader>cpc", "<cmd>PenguCheck<cr>", desc = "Type check (no codegen)" },
+        { "<leader>cpB", "<cmd>PenguBind<cr>", desc = "Generate C Binding (.h -> .d.pengu)" },
+        { "<leader>cpe", "<cmd>PenguExpand<cr>", desc = "Expand to C (bundle.c)" },
+      },
+    },
+  },
+}
+```
+
+#### ⚡ Lazy.nvim (Standalone Neovim)
+
+Create `~/.config/nvim/lua/plugins/pengus.lua`:
+
+```lua
+return {
+  "TuGatito/penguscript-nvim",
+  dependencies = {
+    "L3MON4D3/LuaSnip", -- Optional: for loading snippets if using LuaSnip
+  },
+  opts = {
+    -- format_on_save = true, -- Optional: auto-format on save
+  },
+}
+```
+
+#### 📦 Packer.nvim
+
+```lua
+use {
+  "TuGatito/penguscript-nvim",
+  config = function()
+    require("pengus").setup {
+      -- format_on_save = true,
+    }
+  end,
+}
+```
+
+#### 🔌 vim-plug
+
+```vim
+Plug 'TuGatito/penguscript-nvim'
+```
+
+In your `init.lua`:
+```lua
+require("pengus").setup {}
+```
+
+#### 📁 Manual
+
+```bash
+git clone https://github.com/TuGatito/penguscript-nvim.git \
+  ~/.local/share/nvim/site/pack/vendor/start/penguscript-nvim
+nvim --headless "+helptags ALL" +qa
+```
+
+---
+
+### ⚙️ Configuration
+
+Configuration is entirely optional. Without calling `setup()`, the plugin runs with optimized defaults:
+
+```lua
+require("pengus").setup {
+  -- Path to `pengu` binary. If nil, resolved as:
+  --   1. vim.g.pengus_bin_path
+  --   2. $PENGU_BIN_PATH
+  --   3. "pengu" (search in $PATH)
+  bin_path = nil,
+
+  -- Filetypes managed by the plugin
+  filetypes = { "pengus" },
+
+  -- Auto-start LSP on opening PenguScript files
+  auto_attach = true,
+
+  -- Register `pengus` in lspconfig.configs when nvim-lspconfig is present
+  register_lspconfig = true,
+
+  -- Root markers for project detection
+  root_markers = {
+    "pengu.yaml",
+    "pengu.toml",
+    "Pengu.toml",
+    "build.pengu",
+    "pengu.lock",
+    ".pengufmt.toml",
+    ".git",
+  },
+
+  lsp = {
+    name = "pengus",
+    args = { "lsp", "--stdio" },
+    settings = {},                      -- Settings passed in initializationOptions
+    handlers = nil,                     -- Custom LSP handlers
+    on_attach = function(client, bufnr) -- User on_attach callback (keymaps, etc.)
+    end,
+    capabilities = nil,                 -- Autodetects blink.cmp or cmp-nvim-lsp if nil
+    flags = {},
+    env = nil,
+    log_level = nil,
+  },
+
+  commands = {
+    -- Working directory for commands:
+    --   "project" -> detected project root
+    --   "buffer"  -> directory of current file
+    --   "cwd"     -> Neovim cwd (default)
+    cwd = "cwd",
+    run = { split = "botright", size = 15, args = nil },
+    watch = { split = "botright", size = 15, args = nil },
+    build = { args = nil },
+    check = { args = nil },
+    test = { args = nil },
+    fmt = { args = nil },
+  },
+
+  -- Auto-format with `pengu fmt --stdin` on save
+  format_on_save = false,
+  format_on_save_timeout = 5000, -- ms (5s max to prevent UI freezing)
+
+  highlight = {
+    treesitter = "auto", -- "auto" | true | false
+    colors = {},         -- Highlight group overrides
+  },
+
+  -- Enable snippet registration
+  snippets = true,
+
+  -- Notifications via vim.notify
+  notify = true,
+}
+```
+
+---
+
+### ⌨️ Commands
+
+All commands are accessible in Neovim and provide programmatic Lua equivalents:
+
+| Command | Lua Equivalent | Description |
+| :--- | :--- | :--- |
+| `:PenguBuild [args...]` | `require("pengus").build(...)` | Compiles project (`pengu build`); navigable errors in Quickfix. |
+| `:PenguRun [script] [args...]` | `require("pengus").run(...)` | Runs project or script in reusable integrated terminal. |
+| `:PenguCheck [args...]` | `require("pengus").check(...)` | Fast type checking without codegen (`pengu check`); Quickfix output. |
+| `:PenguTest [args...]` | `require("pengus").test(...)` | Runs integrated unit tests; failures navigable in Quickfix. |
+| `:PenguTestWatch [args...]` | `require("pengus").test_watch(...)` | Continuously runs `pengu test --watch` in terminal on changes. |
+| `:PenguWatch [script]` | `require("pengus").watch(...)` | Re-executes script on any source code modification. |
+| `:PenguBind [header]` | `require("pengus").bind(...)` | Generates `.d.pengu` from C header (auto-detects `.h` buffer and opens split). |
+| `:PenguFmt [args...]` | `require("pengus").format(...)` | Formats buffer via `pengu fmt --stdin` efficiently (slice diff). |
+| `:PenguExpand [file]` | `require("pengus").expand(...)` | Compiles and prints generated `bundle.c` into a split buffer. |
+| `:PenguDoc [args...]` | `require("pengus").doc(...)` | Generates Markdown API documentation (`pengu doc`). |
+| `:PenguTime [script]` | `require("pengus").time(...)` | Runs script and prints per-phase timings (check, codegen, C, runtime). |
+| `:PenguEval <expr>` | `require("pengus").eval(...)` | Evaluates a one-line PenguScript expression and displays result. |
+| `:PenguAssets [--list]` | `require("pengus").assets(...)` | Inspects or regenerates embedded asset modules (`arca`). |
+| `:PenguBench [args...]` | `require("pengus").benchmark(...)` | Runs project benchmark suite. |
+| `:PenguInit <name>` | `require("pengus").init(...)` | Creates a new PenguScript project template (`pengu init`). |
+| `:PenguAdd <url>` | `require("pengus").add(...)` | Installs an external package or binding into `lib/`. |
+| `:PenguUpdate` | `require("pengus").update(...)` | Updates and recompiles configured dependencies. |
+| `:PenguClean` | `require("pengus").clean(...)` | Removes `build/` directory and build artifacts. |
+| `:PenguGc` | `require("pengus").gc(...)` | Garbage-collects global compiler caches. |
+| `:PenguDoctor` | `require("pengus").doctor(...)` | Diagnoses toolchain health, C compilers, and stdlib. |
+| `:PenguVersion` | `require("pengus").version()` | Prints `pengu` toolchain version. |
+| `:PenguLspStart` | `require("pengus.lsp").start_current()` | Starts Language Server on the current buffer. |
+| `:PenguLspRestart` | `require("pengus").restart()` | Restarts Language Server instance. |
+| `:PenguLspLog` | `require("pengus").open_log()` | Opens the LSP log file for debugging. |
+
+---
+
+### 🪄 C Binding Generation (`:PenguBind`)
+
+Working with native C libraries is seamless:
+
+1. Open any C header file (`.h` or `.hpp`), e.g., `include/raylib.h`.
+2. Run `:PenguBind` without arguments (or with options like `:PenguBind --prefix raylib_`).
+3. The plugin executes `pengu bind`, automatically detects the active buffer, and opens the generated `.d.pengu` binding file in a **vertical split** ready for inspection.
+
+---
+
+### 📐 Filetype & Indentation
+
+| Extension | Filetype | Description |
+| :--- | :--- | :--- |
+| `*.pengu` | `pengus` | PenguScript source modules and programs |
+| `*.d.pengu` | `pengus` | External C bindings and declaration files |
+
+- **Official Pengunic Indentation**: 4 spaces, never tabs (`expandtab`).
+- **Block Handling**: Indents after `:` (`weave`, `rune`, `with:`, `do:`, `or:`, `unsafe:`, etc.).
+- **Branch Alignment**: `else`, `else when`, `when ... ->`, and `or:` align with their parent header.
+- **Literal C at Column 0**: Inside triple-quoted `antiquus` blocks (`r"""..."""`), literal C code is kept strictly at column 0.
+- **Comments**: `#` for standard comments and `##` for API documentation (used by LSP hover and `pengu doc`).
+
+---
+
+### ✂️ Snippets Catalog
+
+[`snippets/pengus.json`](./snippets/pengus.json) contains **173 snippets** aligned with the Pengunic Style Guide:
+
+| Trigger | Expansion / Pengunic Pattern |
+| :--- | :--- |
+| `main` | Entry point `weave main into int:` |
+| `mainv` | Entry point without return `weave main into void:` |
+| `weave` | Function declaration with parameters and return type |
+| `weaverit` | Static `ritual` method (constructors `new`, `with_*`) |
+| `weaveshard` | Generic function with `shard T` parameter |
+| `weaveshardwhere` | Generic function with concept bound `where T: Concept` |
+| `antiquus` | Function with literal C body at column 0 |
+| `antiquusexport` | `antiquus` function exported with `@export` (prevents DCE removal) |
+| `rune` | Struct definition (`rune Name:`) |
+| `runederive` | Struct with automatic concept implementations (`derive Par, Ordo`) |
+| `omen` | Algebraic enum or variant with payloads (`omen Event:`) |
+| `concept` | Compile-time contract (`concept Formatter:`) |
+| `bind` | Concept implementation for a type (`bind T with Concept:`) |
+| `enchanting` | Method block associated with a type |
+| `let` / `letin` | Immutable local binding (preferred default) |
+| `var` / `varin` | Mutable local variable (only when mutated with `set`) |
+| `ifas` | Idiomatic `maybe` unpacking: `if v as Type is maybe_val:` |
+| `letelse` | Immutable declaration with fallback: `let x is expr or else def` |
+| `letret` | Early exit on error: `let x is expr or return err` |
+| `orblock` | Structured error handler: `or: error ->` |
+| `withblock` | Struct builder expression with `with:` block |
+| `withtarget` | In-place struct/collection mutation `with target:` |
+| `judge` / `when` | Pattern matching with compile-time exhaustiveness check |
+| `deferbanish` | Idiomatic memory cleanup on scope exit |
+| `jsonparse` | Parse strict JSON document with `std.json` |
+| `jsonstr` | Serialize to JSON string with `std.json` |
+| `httpreq` | Complete HTTP request with `std.petitio` and memory cleanup |
+| `spawn` | Spawn concurrent thread with `std.filum` |
+| `channel` | Create typed concurrency channel with `std.filum` |
+| `builder` | Amortized O(1) string accumulator with `std.builder` |
+| `diagbag` | Structured diagnostic bag with `std.diagnostic` |
+| `asserteq` | Equality test assertion with `std.trial` |
+| `asserttrue` | Boolean test assertion with `std.trial` |
+| `test` | Integrated native unit test block |
+
+---
+
+<a id="espanol"></a><a id="-español"></a>
+## 🇪🇸 Español
+
+[🇬🇧 Switch to English version / Cambiar a la versión en inglés](#-english)
 
 **Soporte oficial y de primer nivel de PenguScript para Neovim y LazyVim** — LSP integrado, diagnósticos navegables en Quickfix, detección de filetype, resaltado de sintaxis completo, sangría automática optimizada para archivos grandes, comandos `:Pengu*` y catálogo de snippets Pengunic. 
 
@@ -13,7 +377,7 @@ Ligero, sin dependencias obligatorias y compatible con Neovim **0.8+** en Linux,
 
 ---
 
-## ✨ Características
+### ✨ Características
 
 - 🧠 **Servidor LSP automático e inteligente**:
   - Inicia `pengu lsp --stdio` automáticamente al abrir archivos `.pengu` o `.d.pengu`.
@@ -46,19 +410,19 @@ Ligero, sin dependencias obligatorias y compatible con Neovim **0.8+** en Linux,
 
 ---
 
-## 📦 Requisitos
+### 📦 Requisitos
 
 - **Neovim** $\ge$ 0.8 (recomendado 0.10+ para Treesitter nativo).
 - Binario [`pengu`](https://github.com/TuGatito/penguscript) en tu `$PATH` (o configurado vía `bin_path`).
 
 ---
 
-## 🚀 Instalación
+### 🚀 Instalación
 
 Dirección del repositorio:  
 `https://github.com/TuGatito/penguscript-nvim`
 
-### 💤 LazyVim
+#### 💤 LazyVim
 
 Si usas [LazyVim](https://lazyvim.org), crea o edita `~/.config/nvim/lua/plugins/pengus.lua`:
 
@@ -124,7 +488,7 @@ return {
 }
 ```
 
-### ⚡ Lazy.nvim (Neovim independiente)
+#### ⚡ Lazy.nvim (Neovim independiente)
 
 Crea `~/.config/nvim/lua/plugins/pengus.lua`:
 
@@ -140,7 +504,7 @@ return {
 }
 ```
 
-### 📦 Packer.nvim
+#### 📦 Packer.nvim
 
 ```lua
 use {
@@ -153,7 +517,7 @@ use {
 }
 ```
 
-### 🔌 vim-plug
+#### 🔌 vim-plug
 
 ```vim
 Plug 'TuGatito/penguscript-nvim'
@@ -164,7 +528,7 @@ Y en tu archivo `init.lua`:
 require("pengus").setup {}
 ```
 
-### 📁 Manual
+#### 📁 Manual
 
 ```bash
 git clone https://github.com/TuGatito/penguscript-nvim.git \
@@ -174,7 +538,7 @@ nvim --headless "+helptags ALL" +qa
 
 ---
 
-## ⚙️ Configuración
+### ⚙️ Configuración
 
 La configuración es completamente opcional. Sin invocar `setup()`, el plugin utiliza valores por defecto optimizados:
 
@@ -252,7 +616,7 @@ require("pengus").setup {
 
 ---
 
-## ⌨️ Comandos
+### ⌨️ Comandos
 
 Todos los comandos están disponibles en Neovim y cuentan con equivalentes en la API Lua:
 
@@ -285,7 +649,7 @@ Todos los comandos están disponibles en Neovim y cuentan con equivalentes en la
 
 ---
 
-## 🪄 Generación de Bindings C (`:PenguBind`)
+### 🪄 Generación de Bindings C (`:PenguBind`)
 
 El flujo de trabajo con cabeceras de C está totalmente optimizado:
 
@@ -295,7 +659,7 @@ El flujo de trabajo con cabeceras de C está totalmente optimizado:
 
 ---
 
-## 📐 Filetype y Sangría
+### 📐 Filetype y Sangría
 
 | Extensión | Filetype | Descripción |
 | :--- | :--- | :--- |
@@ -310,7 +674,7 @@ El flujo de trabajo con cabeceras de C está totalmente optimizado:
 
 ---
 
-## ✂️ Catálogo de Snippets
+### ✂️ Catálogo de Snippets
 
 El archivo [`snippets/pengus.json`](./snippets/pengus.json) cuenta con **173 snippets** organizados y adaptados a las directrices de la Guía de Estilo Pengunic:
 
@@ -353,13 +717,13 @@ El archivo [`snippets/pengus.json`](./snippets/pengus.json) cuenta con **173 sni
 
 ---
 
-## 📁 Estructura del Repositorio
+## 📁 Estructura del Repositorio / Repository Structure
 
 ```
 penguscript-nvim/
-├── README.md                          # Guía de uso e instalación
+├── README.md                          # Documentación bilingüe / Bilingual documentation
 ├── AUDITORIA_PLUGIN_PENGUSCRIPT.md    # Reporte de auditoría y diagnóstico técnico
-├── LICENSE                            # Licencia MIT
+├── LICENSE                            # Licencia MIT / MIT License
 ├── package.json                       # Manifiesto VS Code para snippets (blink.cmp/LuaSnip)
 ├── doc/
 │   ├── pengus.txt                     # Documentación oficial de ayuda (:help pengus)
@@ -386,7 +750,8 @@ penguscript-nvim/
 
 ---
 
-## 📄 Licencia
+## 📄 Licencia / License
 
+Distributed under the **MIT** License. See [`LICENSE`](./LICENSE) for details.  
 Distribuido bajo la licencia **MIT**. Consulta el archivo [`LICENSE`](./LICENSE) para más información.  
 © 2026 TuGatito.
